@@ -1,0 +1,25 @@
+{
+  "name": "scan-analysis-lib",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "scan": "node ./index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "css": "^3.0.0",
+    "eslint": "^9.12.0",
+    "fast-glob": "^3.3.2",
+    "jscpd": "^4.0.5",
+    "less": "^4.2.0",
+    "npm-check": "^6.0.1",
+    "sass": "^1.79.4",
+    "simple-git": "^3.27.0",
+    "tapable": "^2.2.1",
+    "ts-morph": "^23.0.0",
+    "winston": "^3.14.2"
+  }
+}
