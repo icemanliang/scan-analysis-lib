@@ -6,9 +6,9 @@ module.exports = {
     // 扫描的源文件目录
     source: [
         {
-            appName: 'project-app1',
-            sourceDir: path.join(__dirname, 'resources/project-app1'),
-            codeDir: path.join(__dirname, 'resources/project-app1', 'src')
+            appName: 'siam-admin-front',
+            sourceDir: path.join(__dirname, 'resources/siam-admin-front'),
+            codeDir: path.join(__dirname, 'resources/siam-admin-front', 'src')
         },
         // {
         //     appName: 'project-app2',

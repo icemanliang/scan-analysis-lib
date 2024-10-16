@@ -1,4 +1,6 @@
-const { Project } = require('ts-morph');
+const { Project, SyntaxKind } = require('ts-morph');
+const path = require('path');
+const fs = require('fs');
 
 class TsAstCheckPlugin {
   constructor() {
@@ -6,8 +8,8 @@ class TsAstCheckPlugin {
   }
   apply(scanner) {
     scanner.hooks.afterScan.tapPromise('TsAstCheckPlugin', (context) => {
-      return new Promise((resolve, rejects) =>{
-        try{
+      return new Promise((resolve, reject) => {
+        try {
           const project = new Project({
             tsConfigFilePath: path.join(context.root, 'tsconfig.json')
           });
@@ -122,12 +124,12 @@ class TsAstCheckPlugin {
     
           context.scanResults.tsAst = results;
           resolve();
-        }catch(error){
+        } catch(error) {
           context.scanResults.tsAst = null;
           process.send({ type: 'log', level: 'error', text: `Error in plugin ${this.name}: ${error.message}` });
           resolve();
         }
-      })
+      });
     });
   }
 }
