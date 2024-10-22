@@ -1,21 +1,21 @@
-
 class ConfigCheckPlugin {
     constructor() {
       this.name = 'ConfigCheckPlugin';
     }
     apply(scanner) {
       scanner.hooks.afterScan.tapPromise('ConfigCheckPlugin', (context) => {
-        return new Promise((resolve, rejects) =>{
-          try{
+        return new Promise((resolve, reject) => {
+          try {
             const fs = require('fs');
             const path = require('path');
             const npmrcPath = path.join(context.root, '.npmrc');
       
             if (!fs.existsSync(npmrcPath)) {
               const errorMsg = '.npmrc 文件不存在';
-              // console.error(errorMsg);
               context.scanResults.npmrc = { compliant: false, message: errorMsg };
-              throw new Error(errorMsg);
+              context.logger.log('warn', errorMsg);
+              resolve();
+              return;
             }
       
             const content = fs.readFileSync(npmrcPath, 'utf-8');
@@ -26,26 +26,24 @@ class ConfigCheckPlugin {
       
             if (!content.includes(requiredConfig)) {
               const errorMsg = `.npmrc 文件缺少必要的配置项: ${requiredConfig}`;
-              console.error(errorMsg);
+              context.logger.log('warn', errorMsg);
               compliant = false;
-              throw new Error(errorMsg);
             }
       
             if (compliant) {
-              console.log('.npmrc 文件内容合规');
+              context.logger.log('info', '.npmrc 文件内容合规');
             }
             
             context.scanResults.npmrc = { compliant, requiredConfig: !compliant ? requiredConfig : undefined };
             resolve();
-          }catch(error){
+          } catch(error) {
             context.scanResults.npmrc = null;
-            process.send({ type: 'log', level: 'error', text: `Error in plugin ${this.name}: ${error.message}` });
+            context.logger.log('error', `Error in plugin ${this.name}: ${error.message}`);
             resolve();
           }
-        })
+        });
       });
     }
   }
   
   module.exports = ConfigCheckPlugin;
-  

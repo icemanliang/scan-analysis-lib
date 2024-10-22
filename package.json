@@ -4,23 +4,33 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "scan": "node ./index.js"
+    "scan": "node ./script.js"
   },
   "packageManager": "pnpm@9.6.0",
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@babel/parser": "^7.25.8",
+    "@babel/traverse": "^7.25.7",
+    "@typescript-eslint/eslint-plugin": "^8.10.0",
+    "@typescript-eslint/parser": "^8.10.0",
+    "babel-eslint": "^10.1.0",
     "css": "^3.0.0",
-    "eslint": "^9.12.0",
+    "eslint": "^8.0.0",
+    "eslint-plugin-jsdoc": "^50.4.3",
+    "eslint-plugin-react": "^7.28.0",
+    "eslint-plugin-unicorn": "^56.0.0",
     "fast-glob": "^3.3.2",
     "jscpd": "^4.0.5",
+    "knip": "^5.33.3",
     "less": "^4.2.0",
     "npm-check": "^6.0.1",
     "sass": "^1.79.4",
     "simple-git": "^3.27.0",
     "tapable": "^2.2.1",
     "ts-morph": "^23.0.0",
+    "typescript": "^5.6.3",
     "winston": "^3.14.2"
   }
 }

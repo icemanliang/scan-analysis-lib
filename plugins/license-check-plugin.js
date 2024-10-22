@@ -4,8 +4,8 @@ class LicenseCheckPlugin {
     }
     apply(scanner) {
         scanner.hooks.afterScan.tapPromise('LicenseCheckPlugin', (context) => {
-            return new Promise((resolve, rejects) =>{
-                try{
+            return new Promise((resolve, reject) => {
+                try {
                     const fs = require('fs');
                     const path = require('path');
                     
@@ -14,9 +14,10 @@ class LicenseCheckPlugin {
     
                     if (!fs.existsSync(licensePath)) {
                         const errorMsg = 'LICENSE 文件不存在';
-                        console.error(errorMsg);
-                        // context.scanResults.license = { compliant: false, message: errorMsg };
-                        throw new Error(errorMsg);
+                        context.logger.log('warn', errorMsg);
+                        context.scanResults.license = { compliant: false, message: errorMsg };
+                        resolve();
+                        return;
                     }
     
                     const acceptedLicenses = ['MIT', 'Apache-2.0', 'GPL-3.0'];
@@ -24,22 +25,20 @@ class LicenseCheckPlugin {
                     const isCompliant = acceptedLicenses.some(license => content.includes(license));
     
                     if (isCompliant) {
-                        console.log('LICENSE 文件合规');
+                        context.logger.log('info', 'LICENSE 文件合规');
                     } else {
                         const errorMsg = 'LICENSE 文件不包含被认可的license';
-                        console.error(errorMsg);
-                        // context.scanResults.license = { compliant: false, message: errorMsg };
-                        throw new Error(errorMsg);
+                        context.logger.log('warn', errorMsg);
                     }
     
                     context.scanResults.license = { compliant: isCompliant };
                     resolve();
-                }catch(error){
+                } catch(error) {
                     context.scanResults.license = null;
-                    process.send({ type: 'log', level: 'error', text: `Error in plugin ${this.name}: ${error.message}` });
+                    context.logger.log('error', `Error in plugin ${this.name}: ${error.message}`);
                     resolve();
                 }
-            })
+            });
         });
     }
 }

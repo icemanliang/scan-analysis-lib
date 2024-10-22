@@ -10,6 +10,7 @@ class ProjectConfigCheckPlugin {
     scanner.hooks.afterScan.tapPromise('ProjectConfigCheckPlugin', (context) => {
       return new Promise(async (resolve, reject) => {
         try {
+          context.logger.log('info', 'Starting project configuration check...');
           const configFiles = [
             '.husky', 'commitlint.config.js', '.prettierrc', '.npmrc', '.eslintrc.js',
             'tsconfig.json', '.nvmrc', '.editorconfig', 'jest.config.js', '.gitlab-ci.yml',
@@ -22,6 +23,7 @@ class ProjectConfigCheckPlugin {
           configFiles.forEach(file => {
             const filePath = path.join(context.root, file);
             results[file] = fs.existsSync(filePath);
+            context.logger.log('info', `${file}: ${results[file] ? 'Found' : 'Not found'}`);
           });
 
           // 检查 package.json 内的字段
@@ -35,25 +37,21 @@ class ProjectConfigCheckPlugin {
             if (packageContent.jest) results['jest.config.js'] = true;
             results['packages'] = packageContent.dependencies;
             results['node_version'] = packageContent.engines.node;
+            context.logger.log('info', 'Package.json analyzed successfully.');
           }
 
           // 使用 simple-git 获取近期提交信息
           const git = simpleGit(context.root);
-          const log = await git.log({ maxCount: 10 });
-          const commits = log.all.map(commit => commit.message);
-          
-          const results_with_commits = commits.map(message => ({
-            message,
-            isValid: /\[(feat|fix|test|docs|style|refactor|perf)\]:/.test(message)
-          }));
-
-          results['recent_commits'] = results_with_commits;
+          const commits = await git.log({ maxCount: 10 });
+          results['recent_commits'] = commits.all;
+          context.logger.log('info', 'Recent git commits retrieved.');
 
           context.scanResults.projectConfig = results;
+          context.logger.log('info', 'Project configuration check completed.');
           resolve();
-        } catch (error) {
-          context.config.projectConfig = null;
-          process.send({ type: 'log', level: 'error', text: `Error in plugin ${this.name}: ${error.message}` });
+        } catch(error) {
+          context.scanResults.projectConfig = null;
+          context.logger.log('error', `Error in plugin ${this.name}: ${error.message}`);
           resolve();
         }
       });

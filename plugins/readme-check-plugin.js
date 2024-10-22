@@ -4,17 +4,18 @@ class ReadmeCheckPlugin {
     }
     apply(scanner) {
       scanner.hooks.afterScan.tapPromise('ReadmeCheckPlugin', (context) => {
-        return new Promise((resolve, rejects) =>{
-          try{
+        return new Promise((resolve, reject) => {
+          try {
             const fs = require('fs');
             const path = require('path');
             const readmePath = path.join(context.root, 'README.md');
         
             if (!fs.existsSync(readmePath)) {
               const errorMsg = 'README.md 文件不存在';
-              // console.error(errorMsg);
               context.scanResults.readme = { compliant: false, message: errorMsg };
-              throw new Error(errorMsg);
+              context.logger.log('warn', errorMsg);
+              resolve();
+              return;
             }
         
             const content = fs.readFileSync(readmePath, 'utf-8');
@@ -27,24 +28,24 @@ class ReadmeCheckPlugin {
             requiredSections.forEach(section => {
               if (!content.includes(section)) {
                 const errorMsg = `README.md 文件缺少 ${section} 部分`;
-                // console.error(errorMsg);
                 missingSections.push(section);
                 compliant = false;
+                context.logger.log('warn', errorMsg);
               }
             });
         
             if (compliant) {
-              console.log('README.md 文件结构合规');
+              context.logger.log('info', 'README.md 文件结构合规');
             }
         
             context.scanResults.readme = { compliant, missingSections };
             resolve();
-          }catch(error){
+          } catch(error) {
             context.scanResults.readme = null;
-            process.send({ type: 'log', level: 'error', text: `Error in plugin ${this.name}: ${error.message}` });
+            context.logger.log('error', `Error in plugin ${this.name}: ${error.message}`);
             resolve();
           }
-        })
+        });
       });
     }
   }
