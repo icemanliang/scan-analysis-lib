@@ -9,7 +9,13 @@ class DependencyCheckPlugin {
     scanner.hooks.afterScan.tapPromise('DependencyCheckPlugin', async (context) => {
       try {
         context.logger.log('info', 'Starting dependency check...');
-        const { aliasConfig } = context.config;
+        const aliasConfig = {
+          "@src/*": "./src/*",
+          "@components/*": "./src/components/*",
+          "@utils/*": "./src/utils/*",
+          "@hooks/*": "./src/hooks/*",
+          "@assets/*": "./src/assets/*",
+        };
         const project = new Project({
           tsConfigFilePath: path.join(context.root, 'tsconfig.json')
         });
@@ -17,8 +23,8 @@ class DependencyCheckPlugin {
         project.addSourceFilesAtPaths("src/**/*.{ts,tsx,js,jsx}");
 
         const aliasMap = new Map();
-        aliasConfig.forEach(alias => {
-          aliasMap.set(alias.key, alias.value);
+        Object.entries(aliasConfig).forEach(alias => {
+          aliasMap.set(alias[0], alias[1]);
         });
 
         const dependencies = {};

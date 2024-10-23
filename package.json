@@ -23,7 +23,6 @@
     "eslint-plugin-unicorn": "^56.0.0",
     "fast-glob": "^3.3.2",
     "jscpd": "^4.0.5",
-    "knip": "^5.33.3",
     "less": "^4.2.0",
     "npm-check": "^6.0.1",
     "sass": "^1.79.4",
