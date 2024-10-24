@@ -1,19 +1,18 @@
 const path = require('path');
 const simpleGit = require('simple-git');
 
-const checkCommitlintConfig = require('./lib/checkCommitlintConfig');
-const checkPrettierrc = require('./lib/checkPrettierrc');
-const checkReadme = require('./lib/checkReadme');
-const checkNpmrc = require('./lib/checkNpmrc');
-const checkEslintrc = require('./lib/checkEslintrc');
-const checkTsconfig = require('./lib/checkTsconfig');
-const checkNodeVersion = require('./lib/checkNodeVersion');
-const checkEditorconfig = require('./lib/checkEditorconfig');
-const checkGitlabYml = require('./lib/checkGitlabYml');
-const checkPackageJson = require('./lib/checkPackageJson');
+// const checkCommitlintConfig = require('./lib/checkCommitlintConfig');
+// const checkPrettierrc = require('./lib/checkPrettierrc');
+// const checkReadme = require('./lib/checkReadme');
+// const checkNpmrc = require('./lib/checkNpmrc');
+// const checkEslintrc = require('./lib/checkEslintrc');
+// const checkTsconfig = require('./lib/checkTsconfig');
+// const checkNodeVersion = require('./lib/checkNodeVersion');
+// const checkEditorconfig = require('./lib/checkEditorconfig');
+// const checkPackageJson = require('./lib/checkPackageJson');
 const checkCommitMessage = require('./lib/checkCommitMessage');
-const checkLicense = require('./lib/checkLicense');
-const checkEjsTemplates = require('./lib/checkEjsTemplates');
+// const checkLicense = require('./lib/checkLicense');
+// const checkEjsTemplates = require('./lib/checkEjsTemplates');
 
 class ProjectConfigCheckPlugin {
   constructor() {
@@ -28,18 +27,17 @@ class ProjectConfigCheckPlugin {
         const results = {};
 
         // 执行各项检查
-        results.commitlint = await checkCommitlintConfig(context.root);
-        results.prettier = await checkPrettierrc(context.root);
-        results.readme = await checkReadme(context.root);
-        results.npmrc = await checkNpmrc(context.root);
-        results.eslint = await checkEslintrc(context.root);
-        results.tsconfig = await checkTsconfig(context.root);
-        results.nodeVersion = await checkNodeVersion(context.root);
-        results.editorconfig = await checkEditorconfig(context.root);
-        results.gitlabYml = await checkGitlabYml(context.root);
-        results.packageJson = await checkPackageJson(context.root);
-        results.license = await checkLicense(context.root);
-        results.ejsTemplates = await checkEjsTemplates(context.root);
+        // results.commitlint = await checkCommitlintConfig(context.root);
+        // results.prettier = await checkPrettierrc(context.root);
+        // results.readme = await checkReadme(context.root);
+        // results.npmrc = await checkNpmrc(context.root);
+        // results.eslint = await checkEslintrc(context.root);
+        // results.tsconfig = await checkTsconfig(context.root);
+        // results.nodeVersion = await checkNodeVersion(context.root);
+        // results.editorconfig = await checkEditorconfig(context.root);
+        // results.packageJson = await checkPackageJson(context.root);
+        // results.license = await checkLicense(context.root);
+        // results.ejsTemplates = await checkEjsTemplates(context.root);
 
         // 获取最近的提交信息并检查
         const git = simpleGit(context.root);

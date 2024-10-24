@@ -1,28 +1,21 @@
-const commitlint = require('@commitlint/lint');
-const load = require('@commitlint/load');
-
-module.exports = async function checkCommitMessage(commits) {
+module.exports = function checkCommitMessage(commits) {
   const results = [];
+  
+  // 修正正则表达式以正确匹配所有情况
+  const commitMessageRegex = /^(Merge branch|(\[[A-Z]+-\d+\]\s)?(feat|fix|docs|style|refactor|test|chore)(\([\w-]+\))?: .+)/;
 
-  try {
-    const { rules } = await load();
+  for (const commit of commits) {
+    const isValid = commitMessageRegex.test(commit.message);
+    const errors = isValid ? [] : ['Invalid commit message'];
+    const warnings = []; // 可以根据需要添加警告规则
 
-    for (const commit of commits) {
-      const { valid, errors, warnings } = await commitlint(
-        commit.message,
-        rules
-      );
-
-      results.push({
-        hash: commit.hash,
-        message: commit.message,
-        isValid: valid,
-        errors,
-        warnings
-      });
-    }
-  } catch (error) {
-    results.push({ error: error.message });
+    results.push({
+      hash: commit.hash,
+      message: commit.message,
+      isValid,
+      errors,
+      warnings
+    });
   }
 
   return results;
