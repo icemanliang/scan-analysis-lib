@@ -3,9 +3,9 @@ const path = require('path');
 const fs = require('fs');
 const glob = require('fast-glob');
 
-class TsAstCheckPlugin {
+class CountCheckPlugin {
   constructor(options = {}) {
-    this.name = 'TsAstCheckPlugin';
+    this.name = 'CountCheckPlugin';
     this.options = {
       scanDirs: ['./src'],  // 默认扫描当前目录
       ignore: ['**/node_modules/**', '**/dist/**', '**/build/**'],  // 默认忽略的目录
@@ -26,7 +26,7 @@ class TsAstCheckPlugin {
   }
 
   apply(scanner) {
-    scanner.hooks.afterScan.tapPromise('TsAstCheckPlugin', async (context) => {
+    scanner.hooks.afterScan.tapPromise('CountCheckPlugin', async (context) => {
       try {
         context.logger.log('info', 'Starting TypeScript/JavaScript AST check...');
 
@@ -183,4 +183,4 @@ class TsAstCheckPlugin {
   }
 }
 
-module.exports = TsAstCheckPlugin;
+module.exports = CountCheckPlugin;

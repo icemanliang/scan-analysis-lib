@@ -1,6 +1,7 @@
 const path = require('path');
 const fs = require('fs');
 const glob = require('fast-glob');
+const simpleGit = require('simple-git');
 
 class FileCheckPlugin {
   constructor(options = {}) {
@@ -15,14 +16,15 @@ class FileCheckPlugin {
   apply(scanner) {
     scanner.hooks.afterScan.tapPromise('FileCheckPlugin', async (context) => {
       try {
-        context.logger.log('info', 'Starting file statistics and naming check...');
+        context.logger.log('info', 'Starting file statistics, naming check, and commit message check...');
 
         const results = {
           fileStats: {},
           namingIssues: {
             directories: [],
             files: []
-          }
+          },
+          commitMessages: []
         };
 
         const files = await this.getAllFiles(context.root);
@@ -37,12 +39,16 @@ class FileCheckPlugin {
           this.checkDirectoryNaming(dir, results);
         });
 
-        context.scanResults.fileStatsNaming = results;
-        context.logger.log('info', 'File statistics and naming check completed.');
+        // 添加 commit message 检查
+        results.commitMessages = await this.checkCommitMessages(context.root);
+
+        context.scanResults.fileInfo = results;
+        context.logger.log('info', 'File statistics, naming check, and commit message check completed.');
         context.logger.log('info', `Found ${Object.keys(results.fileStats).length} file types.`);
         context.logger.log('info', `Found ${results.namingIssues.directories.length} directories and ${results.namingIssues.files.length} files with naming issues.`);
+        context.logger.log('info', `Checked ${results.commitMessages.length} recent commit messages.`);
       } catch (error) {
-        context.scanResults.fileStatsNaming = null;
+        context.scanResults.fileInfo = null;
         context.logger.log('error', `Error in plugin ${this.name}: ${error.message}`);
       }
     });
@@ -99,6 +105,23 @@ class FileCheckPlugin {
     }
     // 检查是否符合 kebab-case（只包含小写字母和连字符）
     return /^[a-z]+(-[a-z]+)*$/.test(str);
+  }
+
+  async checkCommitMessages(rootDir) {
+    const git = simpleGit(rootDir);
+    const commits = await git.log({ maxCount: 10 });
+    const commitMessageRegex = /^(Merge branch|(\[[A-Z]+-\d+\]\s)?(feat|fix|docs|style|refactor|test|chore)(\([\w-]+\))?: .+)/;
+
+    return commits.all.map(commit => {
+      const isValid = commitMessageRegex.test(commit.message);
+      return {
+        hash: commit.hash,
+        message: commit.message,
+        isValid,
+        errors: isValid ? [] : ['Invalid commit message'],
+        warnings: []
+      };
+    });
   }
 }
 

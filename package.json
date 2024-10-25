@@ -33,6 +33,7 @@
     "npm-check": "^6.0.1",
     "postcss": "^8.4.47",
     "sass": "^1.79.4",
+    "semver": "^7.6.3",
     "simple-git": "^3.27.0",
     "tapable": "^2.2.1",
     "ts-morph": "^23.0.0",

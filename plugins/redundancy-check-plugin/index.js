@@ -45,9 +45,9 @@ class RedundancyCheckPlugin {
         const result = await detectClones(options);
 
         context.logger.log('info', 'Redundancy check completed.');
-        context.scanResults.redundancy = { statistic: result };
+        context.scanResults.redundancyInfo = { statistic: result };
       } catch(error) {
-        context.scanResults.redundancy = null;
+        context.scanResults.redundancyInfo = null;
         context.logger.log('error', `Error in plugin ${this.name}: ${error.message}`);
         console.error('Full error:', error);
       }

@@ -1,6 +1,4 @@
 const path = require('path');
-const simpleGit = require('simple-git');
-
 // const checkCommitlintConfig = require('./lib/checkCommitlintConfig');
 // const checkPrettierrc = require('./lib/checkPrettierrc');
 // const checkReadme = require('./lib/checkReadme');
@@ -10,17 +8,18 @@ const simpleGit = require('simple-git');
 // const checkNodeVersion = require('./lib/checkNodeVersion');
 // const checkEditorconfig = require('./lib/checkEditorconfig');
 // const checkPackageJson = require('./lib/checkPackageJson');
-const checkCommitMessage = require('./lib/checkCommitMessage');
 // const checkLicense = require('./lib/checkLicense');
+// const checkIgnoreFiles = require('./lib/checkIgnoreFiles');
+// const checkBrowserslist = require('./lib/checkBrowserslist');
 // const checkEjsTemplates = require('./lib/checkEjsTemplates');
 
-class ProjectConfigCheckPlugin {
+class ConfigCheckPlugin {
   constructor() {
-    this.name = 'ProjectConfigCheckPlugin';
+    this.name = 'ConfigCheckPlugin';
   }
 
   apply(scanner) {
-    scanner.hooks.afterScan.tapPromise('ProjectConfigCheckPlugin', async (context) => {
+    scanner.hooks.afterScan.tapPromise('ConfigCheckPlugin', async (context) => {
       try {
         context.logger.log('info', 'Starting project configuration check...');
         
@@ -37,21 +36,18 @@ class ProjectConfigCheckPlugin {
         // results.editorconfig = await checkEditorconfig(context.root);
         // results.packageJson = await checkPackageJson(context.root);
         // results.license = await checkLicense(context.root);
+        // results.ignoreFiles = await checkIgnoreFiles(context.root);
+        // results.browserslist = await checkBrowserslist(context.root);
         // results.ejsTemplates = await checkEjsTemplates(context.root);
 
-        // 获取最近的提交信息并检查
-        const git = simpleGit(context.root);
-        const commits = await git.log({ maxCount: 10 });
-        results.commitMessages = await checkCommitMessage(commits.all);
-
-        context.scanResults.projectConfig = results;
+        context.scanResults.configInfo = results;
         context.logger.log('info', 'Project configuration check completed.');
       } catch(error) {
-        context.scanResults.projectConfig = null;
+        context.scanResults.configInfo = null;
         context.logger.log('error', `Error in plugin ${this.name}: ${error.message}`);
       }
     });
   }
 }
 
-module.exports = ProjectConfigCheckPlugin;
+module.exports = ConfigCheckPlugin;

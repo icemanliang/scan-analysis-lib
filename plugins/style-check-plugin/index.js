@@ -64,7 +64,7 @@ class StyleCheckPlugin {
           }
         }
 
-        context.scanResults.style = { 
+        context.scanResults.styleInfo = { 
           nonConformantClasses,
           parseErrors,
           idSelectors,
@@ -90,7 +90,7 @@ class StyleCheckPlugin {
         context.logger.log('info', 'Style check completed.');
       } catch (error) {
         context.logger.log('error', `Error in plugin ${this.name}: ${error.message}`);
-        context.scanResults.style = null;
+        context.scanResults.styleInfo = null;
       }
     });
   }

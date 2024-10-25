@@ -143,7 +143,7 @@ class EslintCheckPlugin {
         const errorCount = results.reduce((sum, result) => sum + result.errorCount, 0);
         const warningCount = results.reduce((sum, result) => sum + result.warningCount, 0);
         
-        context.scanResults.eslint = {
+        context.scanResults.eslintInfo = {
           errorCount,
           warningCount,
           results: results
@@ -151,7 +151,7 @@ class EslintCheckPlugin {
 
         context.logger.log('info', `ESLint check completed. Found ${errorCount} errors and ${warningCount} warnings.`);
       } catch(error) {
-        context.scanResults.eslint = null;
+        context.scanResults.eslintInfo = null;
         context.logger.log('error', `Error in plugin ${this.name}: ${error.message}`);
         console.error('Full error:', error);
       }

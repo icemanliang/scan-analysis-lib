@@ -1,167 +1,144 @@
-const fs = require('fs');
+const { Project } = require('ts-morph');
 const path = require('path');
-const axios = require('axios');
-const yaml = require('js-yaml');
+const fs = require('fs');
+const jsonc = require('jsonc-parser');
 
 class DependencyCheckPlugin {
   constructor(options = {}) {
     this.name = 'DependencyCheckPlugin';
     this.options = {
-      privatePackagePrefix: '@iceman',
-      riskThreshold: {
-        lastUpdateMonths: 6,
-        monthlyDownloads: 1000
+      aliasConfig: {
+        "@src/*": "./src/*",
+        "@components/*": "./src/components/*",
+        "@utils/*": "./src/utils/*",
+        "@hooks/*": "./src/hooks/*",
+        "@assets/*": "./src/assets/*",
       },
-      similarPackages: [
-        ['moment', 'dayjs'],
-        // 添加其他相似包组
-      ],
+      detailedImportPackages: ['react', 'lodash'], // 需要详细导入信息的包
       ...options
     };
   }
 
-  async apply(scanner) {
-    scanner.hooks.afterScan.tapPromise(this.name, async (context) => {
+  apply(scanner) {
+    scanner.hooks.afterScan.tapPromise('DependencyCheckPlugin', async (context) => {
       try {
         context.logger.log('info', 'Starting dependency check...');
-        
-        const packageJson = this.readPackageJson(context.root);
-        const lockFile = this.findLockFile(context.root);
-        const dependencies = this.analyzeDependencies(packageJson, lockFile);
-        
-        const privatePackages = this.identifyPrivatePackages(dependencies);
-        const analysis = {
-          dependencies,
-          privatePackages,
-          riskPackages: await this.identifyRiskPackages(dependencies, privatePackages),
-          similarPackages: this.checkSimilarPackages(dependencies)
-        };
+        const aliasConfig = this.getAliasConfig(context.root);
+        const project = new Project({
+          tsConfigFilePath: path.join(context.root, 'tsconfig.json')
+        });
 
-        context.scanResults.dependencyAnalysis = analysis;
-        context.logger.log('info', 'Dependency check completed.');
+        project.addSourceFilesAtPaths("src/**/*.{ts,tsx,js,jsx}");
+
+        const internalDependencies = {};
+        const externalDependencies = {};
+        
+        project.getSourceFiles().forEach(sourceFile => {
+          const filePath = sourceFile.getFilePath();
+          
+          sourceFile.getImportDeclarations().forEach(importDecl => {
+            const moduleSpecifier = importDecl.getModuleSpecifierValue();
+            const importedFilePath = this.resolveImportPath(context.root, filePath, moduleSpecifier, aliasConfig);
+
+            if (importedFilePath) {
+              if (importedFilePath.includes('node_modules')) {
+                // 外部依赖
+                const packageName = this.getPackageNameFromPath(importedFilePath);
+                if (!externalDependencies[packageName]) {
+                  externalDependencies[packageName] = { count: 0, dependents: [], detailedImports: {} };
+                }
+                externalDependencies[packageName].count += 1;
+                externalDependencies[packageName].dependents.push(filePath);
+
+                // 如果是需要详细导入信息的包，收集导入的具体内容
+                if (this.options.detailedImportPackages.includes(packageName)) {
+                  const importedNames = importDecl.getNamedImports().map(named => named.getName());
+                  const defaultImport = importDecl.getDefaultImport()?.getText();
+                  if (defaultImport) importedNames.unshift(defaultImport);
+                  if (!externalDependencies[packageName].detailedImports[filePath]) {
+                    externalDependencies[packageName].detailedImports[filePath] = [];
+                  }
+                  externalDependencies[packageName].detailedImports[filePath].push(...importedNames);
+                }
+              } else {
+                // 内部依赖
+                if (!internalDependencies[importedFilePath]) {
+                  internalDependencies[importedFilePath] = { count: 0, dependents: [] };
+                }
+                internalDependencies[importedFilePath].count += 1;
+                internalDependencies[importedFilePath].dependents.push(filePath);
+              }
+            }
+          });
+        });
+
+        context.scanResults.dependencyInfo = { internal: internalDependencies, external: externalDependencies };
+        context.logger.log('info', `UsageCheck completed. Analyzed ${Object.keys(internalDependencies).length} internal files and ${Object.keys(externalDependencies).length} external packages.`);
       } catch (error) {
-        context.scanResults.dependencyAnalysis = null;
+        context.scanResults.dependencyInfo = null;
         context.logger.log('error', `Error in plugin ${this.name}: ${error.message}`);
       }
     });
   }
 
-  readPackageJson(rootDir) {
-    const packageJsonPath = path.join(rootDir, 'package.json');
-    return JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+  getAliasConfig(rootDir) {
+    const tsConfigPath = path.join(rootDir, 'tsconfig.json');
+    if (fs.existsSync(tsConfigPath)) {
+      try {
+        const tsConfigContent = fs.readFileSync(tsConfigPath, 'utf8');
+        const tsConfig = jsonc.parse(tsConfigContent);
+        if (tsConfig.compilerOptions?.paths) {
+          return tsConfig.compilerOptions.paths;
+        }
+      } catch (error) {
+        console.error('Error reading tsconfig.json:', error);
+      }
+    }
+    return this.options.aliasConfig;
   }
 
-  findLockFile(rootDir) {
-    const lockFiles = ['package-lock.json', 'yarn.lock', 'pnpm-lock.yaml'];
-    for (const file of lockFiles) {
-      const filePath = path.join(rootDir, file);
-      if (fs.existsSync(filePath)) {
-        return { type: path.basename(file), content: fs.readFileSync(filePath, 'utf8') };
+  resolveImportPath(rootDir, currentFilePath, moduleSpecifier, aliasConfig) {
+    // 处理相对路径导入
+    if (moduleSpecifier.startsWith('.')) {
+      return this.resolveFileWithExtensions(path.resolve(path.dirname(currentFilePath), moduleSpecifier));
+    }
+
+    // 处理别名导入
+    for (const [alias, aliasPath] of Object.entries(aliasConfig)) {
+      const regexAlias = new RegExp(`^${alias.replace('*', '(.*)')}$`);
+      const match = moduleSpecifier.match(regexAlias);
+      if (match) {
+        const resolvedPath = path.join(rootDir, aliasPath[0].replace('*', match[1]));
+        const result = this.resolveFileWithExtensions(resolvedPath);
+        if (result) return result;
+      }
+    }
+
+    // 处理 node_modules 导入
+    const nodeModulesPath = path.join(rootDir, 'node_modules', moduleSpecifier);
+    if (fs.existsSync(nodeModulesPath)) {
+      return nodeModulesPath;
+    }
+
+    // 如果无法解析，返回 null
+    return null;
+  }
+
+  resolveFileWithExtensions(filePath) {
+    const extensions = ['.ts', '.tsx', '.js', '.jsx', ''];
+    for (const ext of extensions) {
+      const fullPath = filePath + ext;
+      if (fs.existsSync(fullPath)) {
+        return fullPath;
       }
     }
     return null;
   }
 
-  analyzeDependencies(packageJson, lockFile) {
-    const dependencies = { ...packageJson.dependencies, ...packageJson.devDependencies };
-    const result = {};
-
-    for (const [name, declaredVersion] of Object.entries(dependencies)) {
-      result[name] = {
-        declaredVersion,
-        lockedVersion: this.getLockedVersion(name, lockFile)
-      };
-    }
-
-    return result;
-  }
-
-  getLockedVersion(packageName, lockFile) {
-    if (!lockFile) return null;
-
-    switch (lockFile.type) {
-      case 'package-lock.json':
-        const npmLock = JSON.parse(lockFile.content);
-        return npmLock.packages[`node_modules/${packageName}`]?.version;
-      case 'yarn.lock':
-        // 简化的 yarn.lock 解析，可能需要更复杂的逻辑
-        const match = lockFile.content.match(new RegExp(`"${packageName}@[^"]+"\n  version "([^"]+)"`));
-        return match ? match[1] : null;
-      case 'pnpm-lock.yaml':
-        const pnpmLock = yaml.load(lockFile.content);
-        return pnpmLock.packages[`/${packageName}`]?.version;
-      default:
-        return null;
-    }
-  }
-
-  identifyPrivatePackages(dependencies) {
-    return Object.keys(dependencies).filter(name => 
-      name.startsWith(this.options.privatePackagePrefix)
-    );
-  }
-
-  async identifyRiskPackages(dependencies, privatePackages) {
-    const riskPackages = [];
-    for (const [name, info] of Object.entries(dependencies)) {
-      if (privatePackages.includes(name)) continue;
-
-      const npmInfo = await this.fetchNpmPackageInfo(name);
-      if (!npmInfo) continue;
-
-      const lastUpdateMonths = this.getMonthsSinceLastUpdate(npmInfo.time.modified);
-      const monthlyDownloads = await this.getMonthlyDownloads(name);
-
-      if (lastUpdateMonths > this.options.riskThreshold.lastUpdateMonths ||
-          monthlyDownloads < this.options.riskThreshold.monthlyDownloads) {
-        riskPackages.push({
-          name,
-          reason: lastUpdateMonths > this.options.riskThreshold.lastUpdateMonths ? 'outdated' : 'low-usage',
-          lastUpdateMonths,
-          monthlyDownloads
-        });
-      }
-    }
-    return riskPackages;
-  }
-
-  checkSimilarPackages(dependencies) {
-    const installedSimilarPackages = [];
-    for (const group of this.options.similarPackages) {
-      const installed = group.filter(pkg => dependencies[pkg]);
-      if (installed.length > 1) {
-        installedSimilarPackages.push(installed);
-      }
-    }
-    return installedSimilarPackages;
-  }
-
-  async fetchNpmPackageInfo(packageName) {
-    try {
-      const response = await axios.get(`https://registry.npmjs.org/${packageName}`);
-      return response.data;
-    } catch (error) {
-      console.error(`Error fetching npm info for ${packageName}:`, error.message);
-      return null;
-    }
-  }
-
-  getMonthsSinceLastUpdate(lastUpdateDate) {
-    const now = new Date();
-    const lastUpdate = new Date(lastUpdateDate);
-    const monthDiff = (now.getFullYear() - lastUpdate.getFullYear()) * 12 + 
-                      (now.getMonth() - lastUpdate.getMonth());
-    return monthDiff;
-  }
-
-  async getMonthlyDownloads(packageName) {
-    try {
-      const response = await axios.get(`https://api.npmjs.org/downloads/point/last-month/${packageName}`);
-      return response.data.downloads;
-    } catch (error) {
-      console.error(`Error fetching download stats for ${packageName}:`, error.message);
-      return 0;
-    }
+  getPackageNameFromPath(fullPath) {
+    const parts = fullPath.split('node_modules/');
+    const packagePath = parts[parts.length - 1];
+    return packagePath.split('/')[0];
   }
 }
 

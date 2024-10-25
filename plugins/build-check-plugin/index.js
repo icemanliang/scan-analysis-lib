@@ -27,7 +27,7 @@ class BuildCheckPlugin {
         const jsChecks = await this.checkJsFiles(buildPath);
         const cssChecks = await this.checkCssFiles(buildPath);
 
-        context.scanResults.buildCheck = {
+        context.scanResults.buildInfo = {
           stats,
           htmlChecks,
           jsChecks,
@@ -36,7 +36,7 @@ class BuildCheckPlugin {
 
         context.logger.log('info', 'Build check completed.');
       } catch (error) {
-        context.scanResults.buildCheck = null;
+        context.scanResults.buildInfo = null;
         context.logger.log('error', `Error in plugin ${this.name}: ${error.message}`);
       }
     });

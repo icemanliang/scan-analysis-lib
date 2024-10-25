@@ -74,6 +74,9 @@ importers:
       sass:
         specifier: ^1.79.4
         version: 1.79.4
+      semver:
+        specifier: ^7.6.3
+        version: 7.6.3
       simple-git:
         specifier: ^3.27.0
         version: 3.27.0
