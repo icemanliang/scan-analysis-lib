@@ -3,7 +3,6 @@ const path = require('path');
 
 module.exports = async function checkIgnoreFiles(rootDir) {
   const ignoreFiles = [
-    '.gitignore',
     '.npmignore',
     '.eslintignore',
     '.stylelintignore',
@@ -29,9 +28,6 @@ module.exports = async function checkIgnoreFiles(rootDir) {
 
         // 特定文件的检查逻辑
         switch (file) {
-          case '.gitignore':
-            checkGitignore(lines, result);
-            break;
           case '.eslintignore':
             checkEslintignore(lines, result);
             break;
@@ -59,33 +55,6 @@ module.exports = async function checkIgnoreFiles(rootDir) {
 
   return results;
 };
-
-function checkGitignore(lines, result) {
-  const commonIgnores = [
-    'logs',
-    '*.log',
-    'npm-debug.log*',
-    'yarn-debug.log*',
-    'yarn-error.log*',
-    'lerna-debug.log*',
-    '.pnpm-debug.log*',
-    '.yarn/cache',
-    '.yarn/unplugged',
-    '.yarn/build-state.yml',
-    '.yarn/install-state.gz',
-    '.pnp.*',
-    '.temp*',
-    '.cache*',
-    'node_modules',
-    'dist/',
-    '.DS_Store'
-  ];
-  commonIgnores.forEach(ignore => {
-    if (!lines.some(line => line.startsWith(ignore) || line === ignore)) {
-      result.errors.push(`缺少常见的忽略项: ${ignore}`);
-    }
-  });
-}
 
 function checkEslintignore(lines, result) {
   const requiredIgnores = ['src/**/*.d.ts', 'src/**/*.css'];

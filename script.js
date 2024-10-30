@@ -15,6 +15,11 @@ const scanner = createScanner({
       sourceDir: path.join(__dirname, 'resources/sop-portal-front'),
       codeDir: path.join(__dirname, 'resources/sop-portal-front', 'src')
     },
+    // {
+    //   appName: 'sop-platform-front',
+    //   sourceDir: path.join(__dirname, 'resources/sop-platform-front'),
+    //   codeDir: path.join(__dirname, 'resources/sop-platform-front', 'src')
+    // },
   ],
   plugins: [
     // 'eslint-check-plugin': {

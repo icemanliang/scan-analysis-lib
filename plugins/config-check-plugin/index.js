@@ -9,7 +9,7 @@ const path = require('path');
 // const checkEditorconfig = require('./lib/checkEditorconfig');
 // const checkPackageJson = require('./lib/checkPackageJson');
 // const checkLicense = require('./lib/checkLicense');
-// const checkIgnoreFiles = require('./lib/checkIgnoreFiles');
+const checkIgnoreFiles = require('./lib/checkIgnoreFiles');
 // const checkBrowserslist = require('./lib/checkBrowserslist');
 // const checkEjsTemplates = require('./lib/checkEjsTemplates');
 
@@ -36,7 +36,7 @@ class ConfigCheckPlugin {
         // results.editorconfig = await checkEditorconfig(context.root);
         // results.packageJson = await checkPackageJson(context.root);
         // results.license = await checkLicense(context.root);
-        // results.ignoreFiles = await checkIgnoreFiles(context.root);
+        results.ignoreFiles = await checkIgnoreFiles(context.root);
         // results.browserslist = await checkBrowserslist(context.root);
         // results.ejsTemplates = await checkEjsTemplates(context.root);
 

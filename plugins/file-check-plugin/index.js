@@ -16,7 +16,7 @@ class FileCheckPlugin {
   apply(scanner) {
     scanner.hooks.afterScan.tapPromise('FileCheckPlugin', async (context) => {
       try {
-        context.logger.log('info', 'Starting file statistics, naming check, and commit message check...');
+        context.logger.log('info', 'Starting file checks...');
 
         const results = {
           fileStats: {},
@@ -24,7 +24,9 @@ class FileCheckPlugin {
             directories: [],
             files: []
           },
-          commitMessages: []
+          commitMessages: [],
+          huskyCheck: { exists: false, isValid: false, errors: [] },
+          gitignoreCheck: { exists: false, isValid: false, errors: [] }
         };
 
         const files = await this.getAllFiles(context.root);
@@ -33,20 +35,20 @@ class FileCheckPlugin {
           this.checkNaming(file, results);
         });
 
-        // 检查目录命名
         const directories = await this.getAllDirectories(context.root);
         directories.forEach(dir => {
           this.checkDirectoryNaming(dir, results);
         });
 
-        // 添加 commit message 检查
+        // 执行 husky 检查
+        results.huskyCheck = await this.checkHusky(context.root);
+        // 执行 gitignore 检查
+        results.gitignoreCheck = await this.checkGitignore(context.root);
+
         results.commitMessages = await this.checkCommitMessages(context.root);
 
         context.scanResults.fileInfo = results;
-        context.logger.log('info', 'File statistics, naming check, and commit message check completed.');
-        context.logger.log('info', `Found ${Object.keys(results.fileStats).length} file types.`);
-        context.logger.log('info', `Found ${results.namingIssues.directories.length} directories and ${results.namingIssues.files.length} files with naming issues.`);
-        context.logger.log('info', `Checked ${results.commitMessages.length} recent commit messages.`);
+        context.logger.log('info', 'File checks completed.');
       } catch (error) {
         context.scanResults.fileInfo = null;
         context.logger.log('error', `Error in plugin ${this.name}: ${error.message}`);
@@ -122,6 +124,89 @@ class FileCheckPlugin {
         warnings: []
       };
     });
+  }
+
+  async checkHusky(rootDir) {
+    const result = {
+      exists: false,
+      isValid: false,
+      errors: []
+    };
+
+    const huskyDir = path.join(rootDir, '.husky');
+    if (fs.existsSync(huskyDir)) {
+      result.exists = true;
+      const requiredHooks = ['commit-msg', 'pre-commit', 'pre-push'];
+      
+      requiredHooks.forEach(hook => {
+        const hookPath = path.join(huskyDir, hook);
+        if (!fs.existsSync(hookPath)) {
+          result.errors.push(`缺少 ${hook} 钩子文件`);
+        }
+      });
+      
+      result.isValid = result.errors.length === 0;
+    } else {
+      result.errors.push('.husky 目录不存在');
+    }
+
+    return result;
+  }
+
+  async checkGitignore(rootDir) {
+    const result = {
+      exists: false,
+      isValid: false,
+      errors: []
+    };
+
+    const gitignorePath = path.join(rootDir, '.gitignore');
+    if (fs.existsSync(gitignorePath)) {
+      result.exists = true;
+      try {
+        const content = fs.readFileSync(gitignorePath, 'utf8');
+        const lines = content.split('\n').map(line => line.trim());
+
+        if (lines.length === 0 || (lines.length === 1 && lines[0] === '')) {
+          result.errors.push('.gitignore 文件是空的');
+        }
+
+        // 参考 checkIgnoreFiles.js 中的 checkGitignore 函数
+        const requiredIgnores = [
+          'logs',
+          '*.log',
+          'npm-debug.log*',
+          'yarn-debug.log*',
+          'yarn-error.log*',
+          'lerna-debug.log*',
+          '.pnpm-debug.log*',
+          '.yarn/cache',
+          '.yarn/unplugged',
+          '.yarn/build-state.yml',
+          '.yarn/install-state.gz',
+          '.pnp.*',
+          '.temp*',
+          '.cache*',
+          'node_modules',
+          'dist/',
+          '.DS_Store'
+        ];
+
+        requiredIgnores.forEach(ignore => {
+          if (!lines.some(line => line.startsWith(ignore) || line === ignore)) {
+            result.errors.push(`缺少必要的忽略项: ${ignore}`);
+          }
+        });
+
+        result.isValid = result.errors.length === 0;
+      } catch (error) {
+        result.errors.push(error.message);
+      }
+    } else {
+      result.errors.push('.gitignore 文件不存在');
+    }
+
+    return result;
   }
 }
 
