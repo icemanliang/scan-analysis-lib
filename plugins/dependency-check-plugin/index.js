@@ -20,7 +20,7 @@ class DependencyCheckPlugin {
   }
 
   apply(scanner) {
-    scanner.hooks.afterScan.tapPromise('DependencyCheckPlugin', async (context) => {
+    scanner.hooks.dependency.tapPromise('DependencyCheckPlugin', async (context) => {
       try {
         context.logger.log('info', 'Starting dependency check...');
         const aliasConfig = this.getAliasConfig(context.root);

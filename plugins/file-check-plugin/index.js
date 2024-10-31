@@ -14,7 +14,7 @@ class FileCheckPlugin {
   }
 
   apply(scanner) {
-    scanner.hooks.afterScan.tapPromise('FileCheckPlugin', async (context) => {
+    scanner.hooks.project.tapPromise('FileCheckPlugin', async (context) => {
       try {
         context.logger.log('info', 'Starting file checks...');
 

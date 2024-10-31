@@ -106,7 +106,7 @@ class PackageCheckPlugin {
   }
 
   async apply(scanner) {
-    scanner.hooks.afterScan.tapPromise(this.name, async (context) => {
+    scanner.hooks.dependency.tapPromise(this.name, async (context) => {
       try {
         context.logger.log('info', 'Starting dependency check...');
         

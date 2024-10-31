@@ -27,7 +27,7 @@ class StylelintCheckPlugin {
   }
 
   async apply(scanner) {
-    scanner.hooks.afterScan.tapPromise('StylelintCheckPlugin', async (context) => {
+    scanner.hooks.code.tapPromise('StylelintCheckPlugin', async (context) => {
       try {
         context.logger.log('info', 'Starting Stylelint check...');
         
@@ -45,7 +45,7 @@ class StylelintCheckPlugin {
           { pattern: 'src/**/*.less', syntax: 'postcss-less' },
           { pattern: 'src/**/*.scss', syntax: 'postcss-scss' },
           { pattern: 'src/**/*.css', syntax: null },
-          { pattern: 'src/**/*.vue', syntax: 'postcss-html' }
+        //   { pattern: 'src/**/*.vue', syntax: 'postcss-html' }
         ];
 
         const stats = {

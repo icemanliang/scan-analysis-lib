@@ -26,7 +26,7 @@ class CountCheckPlugin {
   }
 
   apply(scanner) {
-    scanner.hooks.afterScan.tapPromise('CountCheckPlugin', async (context) => {
+    scanner.hooks.code.tapPromise('CountCheckPlugin', async (context) => {
       try {
         context.logger.log('info', 'Starting TypeScript/JavaScript AST check...');
 
@@ -38,11 +38,11 @@ class CountCheckPlugin {
           }
         });
 
-        context.scanResults.tsAst = this.results;
+        context.scanResults.countInfo = this.results;
         context.logger.log('info', `AST check completed. Found ${this.results.generatorFunctions.length} generator functions, ${this.results.classComponents.length} class components, ${Object.keys(this.results.domApis).length} DOM APIs, and ${Object.keys(this.results.bomApis).length} BOM APIs.`);
         context.logger.log('info', `In TypeScript files: Found ${this.results.functionStats.total} functions in total, including ${this.results.functionStats.hooks} Hook functions. ${this.results.functionStats.missingTypes} functions have missing type declarations.`);
       } catch (error) {
-        context.scanResults.tsAst = null;
+        context.scanResults.countInfo = null;
         context.logger.log('error', `Error in plugin ${this.name}: ${error.message}`);
       }
     });

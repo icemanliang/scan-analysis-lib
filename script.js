@@ -1,43 +1,41 @@
-const { config } = require('process');
 const createScanner = require('./index');
 const path = require('path');
 
 const scanner = createScanner({
-  FINAL_RESULT_DIR: './scan-results',
-  source: [
+  resultDir: 'scan-results',
+  sources: [
     {
       appName: 'siam-admin-front',
-      sourceDir: path.join(__dirname, 'resources/siam-admin-front'),
-      codeDir: path.join(__dirname, 'resources/siam-admin-front', 'src')
+      baseDir: path.join(__dirname, 'resources/siam-admin-front'),
+      codeDir: 'src',
+      buildDir:'dist'
     },
     {
       appName: 'sop-portal-front',
-      sourceDir: path.join(__dirname, 'resources/sop-portal-front'),
-      codeDir: path.join(__dirname, 'resources/sop-portal-front', 'src')
+      baseDir: path.join(__dirname, 'resources/sop-portal-front'),
+      codeDir: 'src',
+      buildDir: ''
     },
-    // {
-    //   appName: 'sop-platform-front',
-    //   sourceDir: path.join(__dirname, 'resources/sop-platform-front'),
-    //   codeDir: path.join(__dirname, 'resources/sop-platform-front', 'src')
-    // },
+    {
+      appName: 'sop-platform-front',
+      baseDir: path.join(__dirname, 'resources/sop-platform-front'),
+      codeDir: 'src',
+      buildDir: 'dist'
+    },
   ],
   plugins: [
-    // 'eslint-check-plugin': {
-    //   enabled: true,
-    //   // 其他 ESLint 特定配置
-    // },
     {
-      pluginName: 'redundancy-check-plugin',
-      enabled: true,
+      name: 'eslint-check-plugin',
+      enable: true,
       config: {
-
+        
       }
     },
     // ... 其他插件配置
   ]
 });
 
-scanner.runAnalysis().then(() => {
+scanner.scan().then(() => {
   console.log('=========Analysis completed=========');
 }).catch(error => {
   console.error('Analysis failed:', error);

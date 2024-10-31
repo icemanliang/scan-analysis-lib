@@ -17,7 +17,7 @@ class BuildCheckPlugin {
   }
 
   apply(scanner) {
-    scanner.hooks.afterScan.tapPromise(this.name, async (context) => {
+    scanner.hooks.build.tapPromise(this.name, async (context) => {
       try {
         context.logger.log('info', 'Starting build check...');
         

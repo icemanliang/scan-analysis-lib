@@ -19,7 +19,7 @@ class ConfigCheckPlugin {
   }
 
   apply(scanner) {
-    scanner.hooks.afterScan.tapPromise('ConfigCheckPlugin', async (context) => {
+    scanner.hooks.project.tapPromise('ConfigCheckPlugin', async (context) => {
       try {
         context.logger.log('info', 'Starting project configuration check...');
         

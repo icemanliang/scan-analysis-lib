@@ -18,7 +18,7 @@ class EslintCheckPlugin {
   }
 
   apply(scanner) {
-    scanner.hooks.afterScan.tapPromise('EslintCheckPlugin', async (context) => {
+    scanner.hooks.code.tapPromise('EslintCheckPlugin', async (context) => {
       try {
         context.logger.log('info', 'Starting ESLint check...');
         

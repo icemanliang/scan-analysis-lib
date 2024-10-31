@@ -9,7 +9,7 @@ class RedundancyCheckPlugin {
   }
 
   apply(scanner) {
-    scanner.hooks.afterScan.tapPromise('RedundancyCheckPlugin', async (context) => {
+    scanner.hooks.code.tapPromise('RedundancyCheckPlugin', async (context) => {
       try {
         context.logger.log('info', 'Starting redundancy check...');
 
