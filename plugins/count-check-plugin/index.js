@@ -4,12 +4,11 @@ const fs = require('fs');
 const glob = require('fast-glob');
 
 class CountCheckPlugin {
-  constructor(options = {}) {
+  constructor(config = {}) {
     this.name = 'CountCheckPlugin';
     this.options = {
-      scanDirs: ['./src'],  // 默认扫描当前目录
-      ignore: ['**/node_modules/**', '**/dist/**', '**/build/**'],  // 默认忽略的目录
-      ...options
+      ignore: ['**/__tests__/**', '**/*.test.ts(x)', '**/*.test.js(x)'],  // 默认忽略的目录
+      ...config
     };
     this.results = {
       generatorFunctions: [],
@@ -23,14 +22,16 @@ class CountCheckPlugin {
         functionsWithMissingTypes: []
       }
     };
+    this.baseDir = '';
   }
 
   apply(scanner) {
     scanner.hooks.code.tapPromise('CountCheckPlugin', async (context) => {
       try {
-        context.logger.log('info', 'Starting TypeScript/JavaScript AST check...');
+        context.logger.log('info', 'start count check...');
+        this.baseDir = context.baseDir;
 
-        const files = await this.getAllFiles(context.root);
+        const files = await this.getAllFiles(context.baseDir, context.codeDir);
         files.forEach(file => {
           const sourceFile = this.createSourceFile(file);
           if (sourceFile) {
@@ -38,18 +39,61 @@ class CountCheckPlugin {
           }
         });
 
-        context.scanResults.countInfo = this.results;
-        context.logger.log('info', `AST check completed. Found ${this.results.generatorFunctions.length} generator functions, ${this.results.classComponents.length} class components, ${Object.keys(this.results.domApis).length} DOM APIs, and ${Object.keys(this.results.bomApis).length} BOM APIs.`);
-        context.logger.log('info', `In TypeScript files: Found ${this.results.functionStats.total} functions in total, including ${this.results.functionStats.hooks} Hook functions. ${this.results.functionStats.missingTypes} functions have missing type declarations.`);
+        context.scanResults.countInfo = this.formatResults(this.results);
+        
+        context.logger.log('info', 
+          `total ${this.results.generatorFunctions.length} generator functions, ` +
+          `${this.results.classComponents.length} class components, ` +
+          `${Object.keys(this.results.domApis).length} dom apis, and ` +
+          `${Object.keys(this.results.bomApis).length} bom apis.`
+        );
+        context.logger.log('info',
+          `total ${this.results.functionStats.total} functions, ` +
+          `including ${this.results.functionStats.hooks} hook functions. ` +
+          `${this.results.functionStats.missingTypes} functions missing type declarations.`
+        );
       } catch (error) {
         context.scanResults.countInfo = null;
-        context.logger.log('error', `Error in plugin ${this.name}: ${error.message}`);
+        context.logger.log('error', `error in plugin ${this.name}: ${error.message}`);
       }
     });
   }
 
-  async getAllFiles(rootDir) {
-    const patterns = this.options.scanDirs.map(dir => path.join(rootDir, dir, '**/*.{js,jsx,ts,tsx}'));
+  formatFilePath(fullPath) {
+    return path.relative(this.baseDir, fullPath);
+  }
+
+  formatResults(results) {
+    const formatItem = item => ({
+      ...item,
+      file: this.formatFilePath(item.file)
+    });
+
+    const formatArray = array => array.map(formatItem);
+
+    const formatApiMap = apiMap => {
+      const newMap = {};
+      Object.entries(apiMap).forEach(([key, value]) => {
+        newMap[key] = formatArray(value);
+      });
+      return newMap;
+    };
+
+    return {
+      ...results,
+      generatorFunctions: formatArray(results.generatorFunctions),
+      classComponents: formatArray(results.classComponents),
+      domApis: formatApiMap(results.domApis),
+      bomApis: formatApiMap(results.bomApis),
+      functionStats: {
+        ...results.functionStats,
+        functionsWithMissingTypes: formatArray(results.functionStats.functionsWithMissingTypes)
+      }
+    };
+  }
+
+  async getAllFiles(baseDir, codeDir) {
+    const patterns = path.join(baseDir, codeDir, '**/*.{js,jsx,ts,tsx}');
     return glob(patterns, {
       ignore: this.options.ignore,
       absolute: true,
