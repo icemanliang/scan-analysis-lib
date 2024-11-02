@@ -1,18 +1,24 @@
 const stylelint = require('stylelint');
-const path = require('path');
 const glob = require('fast-glob');
+const defaultConfig = require('./config');
+const { formatResults, analyzeResults } = require('./util');
 
 class StylelintCheckPlugin {
-  constructor() {
+  constructor(config = {}) {
     this.name = 'StylelintCheckPlugin';
+    
+    // 合并配置
+    this.config = {
+      ...defaultConfig,
+      ...config
+    };
   }
 
   async checkFiles(pattern, config, context) {
     const files = await glob(pattern, {
-      cwd: context.root,
+      cwd: context.baseDir,
       absolute: true,
-      followSymbolicLinks: false,
-      deep: 5
+      ...this.config.glob
     });
 
     if (files.length === 0) {
@@ -21,8 +27,7 @@ class StylelintCheckPlugin {
 
     return stylelint.lint({
       files,
-      config,
-      maxWarnings: 1000
+      config
     });
   }
 
@@ -32,35 +37,12 @@ class StylelintCheckPlugin {
         context.logger.log('info', 'Starting Stylelint check...');
         
         const baseConfig = {
-          rules: {
-            'max-nesting-depth': 5,
-            'selector-max-id': 0,
-            'selector-class-pattern': '^[a-z][a-zA-Z0-9]+$',
-            'declaration-block-single-line-max-declarations': 1,
-            'color-hex-case': 'lower'
-          }
+          rules: this.config.stylelint.rules
         };
 
-        const fileConfigs = [
-          { pattern: 'src/**/*.less', syntax: 'postcss-less' },
-          { pattern: 'src/**/*.scss', syntax: 'postcss-scss' },
-          { pattern: 'src/**/*.css', syntax: null },
-        //   { pattern: 'src/**/*.vue', syntax: 'postcss-html' }
-        ];
+        let allResults = [];
 
-        const stats = {
-          deepNestingCount: 0,
-          idSelectorsCount: 0,
-          invalidClassNamesCount: 0,
-          multiLineDeclarationsCount: 0,
-          uppercaseColorsCount: 0
-        };
-
-        let totalResults = [];
-        let totalErrorCount = 0;
-        let totalWarningCount = 0;
-
-        for (const { pattern, syntax } of fileConfigs) {
+        for (const { pattern, syntax } of this.config.files) {
           const config = syntax 
             ? { ...baseConfig, customSyntax: syntax }
             : baseConfig;
@@ -68,56 +50,28 @@ class StylelintCheckPlugin {
           const result = await this.checkFiles(pattern, config, context);
           if (!result) continue;
 
-          const limitedResults = result.results.slice(0, 1000);
-          this.processResults(limitedResults, stats);
-
-          totalResults = totalResults.concat(limitedResults);
-          totalErrorCount += result.errored ? Math.min(result.results.length, 1000) : 0;
-          totalWarningCount += Math.min(
-            result.results.reduce((sum, res) => sum + res.warnings.length, 0),
-            1000 * 100
-          );
+          allResults = allResults.concat(result.results);
         }
 
+        // 格式化结果
+        const formattedResults = formatResults(allResults, context.baseDir);
+        const analysis = analyzeResults(allResults);
+
         context.scanResults.stylelintInfo = {
-          errorCount: totalErrorCount,
-          warningCount: totalWarningCount,
-          stats,
-          results: totalResults.slice(0, 1000)
+          ...formattedResults,
+          ...analysis
         };
 
-        context.logger.log('info', `Stylelint check completed. Found ${totalErrorCount} errors and ${totalWarningCount} warnings.`);
+        const { errorCount, errorRuleCount } = context.scanResults.stylelintInfo;
+        context.logger.log('info', 
+          `Stylelint check completed. Found ${errorCount} errors from ${errorRuleCount} rules.`
+        );
 
       } catch(error) {
         context.scanResults.stylelintInfo = null;
         context.logger.log('error', `Error in plugin ${this.name}: ${error.message}`);
         console.error('Full error:', error);
       }
-    });
-  }
-
-  processResults(results, stats) {
-    results.forEach(fileResult => {
-      const warnings = fileResult.warnings.slice(0, 100);
-      warnings.forEach(warning => {
-        switch(warning.rule) {
-          case 'max-nesting-depth':
-            stats.deepNestingCount++;
-            break;
-          case 'selector-max-id':
-            stats.idSelectorsCount++;
-            break;
-          case 'selector-class-pattern':
-            stats.invalidClassNamesCount++;
-            break;
-          case 'declaration-block-single-line-max-declarations':
-            stats.multiLineDeclarationsCount++;
-            break;
-          case 'color-hex-case':
-            stats.uppercaseColorsCount++;
-            break;
-        }
-      });
     });
   }
 }

@@ -29,23 +29,23 @@ class FileCheckPlugin {
           gitignoreCheck: { exists: false, isValid: false, errors: [] }
         };
 
-        const files = await this.getAllFiles(context.root);
+        const files = await this.getAllFiles(context.baseDir);
         files.forEach(file => {
           this.analyzeFile(file, results);
           this.checkNaming(file, results);
         });
 
-        const directories = await this.getAllDirectories(context.root);
+        const directories = await this.getAllDirectories(context.baseDir);
         directories.forEach(dir => {
           this.checkDirectoryNaming(dir, results);
         });
 
         // 执行 husky 检查
-        results.huskyCheck = await this.checkHusky(context.root);
+        results.huskyCheck = await this.checkHusky(context.baseDir);
         // 执行 gitignore 检查
-        results.gitignoreCheck = await this.checkGitignore(context.root);
+        results.gitignoreCheck = await this.checkGitignore(context.baseDir);
 
-        results.commitMessages = await this.checkCommitMessages(context.root);
+        results.commitMessages = await this.checkCommitMessages(context.baseDir);
 
         context.scanResults.fileInfo = results;
         context.logger.log('info', 'File checks completed.');

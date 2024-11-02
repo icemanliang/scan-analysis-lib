@@ -29,41 +29,41 @@ const scanner = createScanner({
     },
   ],
   plugins: [
-    {
-      name: 'eslint-check-plugin',
-      config: {}
-    },
+    // {
+    //   name: 'eslint-check-plugin',
+    //   config: {}
+    // },
     // {
     //   name: 'stylelint-check-plugin',
-    //   config: null
+    //   config: {}
     // },
     // {
     //   name: 'count-check-plugin',
     //   config: {}
     // },
+    {
+      name: 'file-check-plugin',
+      config: {}
+    },
     // {
-    //   name: 'package-check-plugin',
-    //   config: null
+    //   name: 'config-check-plugin',
+    //   config: {}
     // },
     // {
-    //   name: 'file-check-plugin',
-    //   config: null
+    //   name: 'package-check-plugin',
+    //   config: {}
     // },
     // {
     //   name: 'dependency-check-plugin',
-    //   config: null
+    //   config: {}
     // },
     // {
     //   name: 'build-check-plugin',
-    //   config: null
-    // },
-    // {
-    //   name: 'config-check-plugin',
-    //   config: null
+    //   config: {}
     // },
     // {
     //   name: 'redundancy-check-plugin',
-    //   config: null
+    //   config: {}
     // }
   ]
 });
