@@ -1,18 +1,11 @@
 const fs = require('fs');
 const path = require('path');
 
-module.exports = async function checkIgnoreFiles(rootDir) {
-  const ignoreFiles = [
-    '.npmignore',
-    '.eslintignore',
-    '.stylelintignore',
-    '.prettierignore'
-  ];
-
+module.exports = async function checkIgnoreFiles(baseDir, config) {
   const results = {};
 
-  for (const file of ignoreFiles) {
-    const filePath = path.join(rootDir, file);
+  for (const file of config.files) {
+    const filePath = path.join(baseDir, file);
     const result = { exists: false, isValid: false, errors: [] };
 
     if (fs.existsSync(filePath)) {
@@ -21,26 +14,17 @@ module.exports = async function checkIgnoreFiles(rootDir) {
         const content = fs.readFileSync(filePath, 'utf8');
         const lines = content.split('\n').map(line => line.trim());
 
-        // 检查是否有内容
         if (lines.length === 0 || (lines.length === 1 && lines[0] === '')) {
           result.errors.push(`${file} 是空的`);
         }
 
-        // 特定文件的检查逻辑
-        switch (file) {
-          case '.eslintignore':
-            checkEslintignore(lines, result);
-            break;
-          case '.prettierignore':
-            checkPrettierignore(lines, result);
-            break;
-          case '.stylelintignore':
-            checkStylelintignore(lines, result);
-            break;
-          case '.npmignore':
-            checkNpmignore(lines, result);
-            break;
-        }
+        // 检查必要的忽略项
+        const requiredIgnores = config.rules[file] || [];
+        requiredIgnores.forEach(ignore => {
+          if (!lines.some(line => line.startsWith(ignore) || line === ignore)) {
+            result.errors.push(`缺少必要的忽略项: ${ignore}`);
+          }
+        });
 
         result.isValid = result.errors.length === 0;
       } catch (error) {
@@ -55,58 +39,3 @@ module.exports = async function checkIgnoreFiles(rootDir) {
 
   return results;
 };
-
-function checkEslintignore(lines, result) {
-  const requiredIgnores = ['src/**/*.d.ts', 'src/**/*.css'];
-  requiredIgnores.forEach(ignore => {
-    if (!lines.includes(ignore)) {
-      result.errors.push(`缺少必要的忽略项: ${ignore}`);
-    }
-  });
-}
-
-function checkPrettierignore(lines, result) {
-  const commonIgnores = [
-    '**/*.md',
-    '**/*.svg',
-    '**/*.ejs',
-    '**/*.html',
-    'package.json',
-    'node_modules',
-    'dist',
-    'build',
-    '.DS_Store',
-    '*.log'
-  ];
-  commonIgnores.forEach(ignore => {
-    if (!lines.some(line => line.startsWith(ignore) || line === ignore)) {
-      result.errors.push(`建议添加常见的忽略项: ${ignore}`);
-    }
-  });
-}
-
-function checkStylelintignore(lines, result) {
-  const commonIgnores = [
-    '*.ts',
-    '*.tsx',
-    '*.ejs',
-    '*.html',
-    'node_modules',
-    'dist',
-    'build'
-  ];
-  commonIgnores.forEach(ignore => {
-    if (!lines.some(line => line.startsWith(ignore) || line === ignore)) {
-      result.errors.push(`建议添加常见的忽略项: ${ignore}`);
-    }
-  });
-}
-
-function checkNpmignore(lines, result) {
-  const recommendedIgnores = ['node_modules', 'site', '.DS_Store'];
-  recommendedIgnores.forEach(ignore => {
-    if (!lines.some(line => line.startsWith(ignore) || line === ignore)) {
-      result.errors.push(`建议添加推荐的忽略项: ${ignore}`);
-    }
-  });
-}

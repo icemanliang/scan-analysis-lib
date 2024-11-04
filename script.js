@@ -41,10 +41,10 @@ const scanner = createScanner({
     //   name: 'count-check-plugin',
     //   config: {}
     // },
-    {
-      name: 'file-check-plugin',
-      config: {}
-    },
+    // {
+    //   name: 'git-check-plugin',
+    //   config: {}
+    // },
     // {
     //   name: 'config-check-plugin',
     //   config: {}
@@ -61,10 +61,10 @@ const scanner = createScanner({
     //   name: 'build-check-plugin',
     //   config: {}
     // },
-    // {
-    //   name: 'redundancy-check-plugin',
-    //   config: {}
-    // }
+    {
+      name: 'redundancy-check-plugin',
+      config: {}
+    }
   ]
 });
 

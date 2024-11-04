@@ -1,8 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 
-module.exports = async function checkEditorconfig(rootDir) {
-  const filePath = path.join(rootDir, '.editorconfig');
+module.exports = async function checkEditorconfig(baseDir, config) {
+  const filePath = path.join(baseDir, '.editorconfig');
   const result = { exists: false, isValid: false, errors: [] };
 
   if (fs.existsSync(filePath)) {
@@ -12,39 +12,30 @@ module.exports = async function checkEditorconfig(rootDir) {
       const lines = content.split('\n').map(line => line.trim());
 
       // 检查标准配置
-      const expectedConfigs = {
-        'root = true': false,
-        '[*]': false,
-        'indent_style = space': false,
-        'indent_size = 4': false,
-        'end_of_line = lf': false,
-        'charset = utf-8': false,
-        'trim_trailing_whitespace = true': false,
-        'insert_final_newline = true': false
-      };
+      const configStatus = { ...config.expectedConfigs };
 
       lines.forEach(line => {
-        for (const config in expectedConfigs) {
-          if (line === config) {
-            expectedConfigs[config] = true;
+        for (const configKey in configStatus) {
+          if (line === configKey) {
+            configStatus[configKey] = true;
             break;
           }
         }
       });
 
       // 检查是否所有预期的配置都存在
-      for (const config in expectedConfigs) {
-        if (!expectedConfigs[config]) {
-          result.errors.push(`Missing configuration: ${config}`);
+      for (const configKey in configStatus) {
+        if (!configStatus[configKey]) {
+          result.errors.push(`缺少配置项: ${configKey}`);
         }
       }
 
       result.isValid = result.errors.length === 0;
     } catch (error) {
-      result.errors.push(error.message);
+      result.errors.push(`读取文件时出错: ${error.message}`);
     }
   } else {
-    result.errors.push('.editorconfig file does not exist');
+    result.errors.push('.editorconfig 文件不存在');
   }
 
   return result;

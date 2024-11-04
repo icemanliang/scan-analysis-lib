@@ -20,12 +20,12 @@ class DependencyCheckPlugin {
   }
 
   apply(scanner) {
-    scanner.hooks.dependency.tapPromise('DependencyCheckPlugin', async (context) => {
+    scanner.hooks.dependency.tapPromise(this.name, async (context) => {
       try {
         context.logger.log('info', 'Starting dependency check...');
-        const aliasConfig = this.getAliasConfig(context.root);
+        const aliasConfig = this.getAliasConfig(context.baseDir);
         const project = new Project({
-          tsConfigFilePath: path.join(context.root, 'tsconfig.json')
+          tsConfigFilePath: path.join(context.baseDir, 'tsconfig.json')
         });
 
         project.addSourceFilesAtPaths("src/**/*.{ts,tsx,js,jsx}");
@@ -38,7 +38,7 @@ class DependencyCheckPlugin {
           
           sourceFile.getImportDeclarations().forEach(importDecl => {
             const moduleSpecifier = importDecl.getModuleSpecifierValue();
-            const importedFilePath = this.resolveImportPath(context.root, filePath, moduleSpecifier, aliasConfig);
+            const importedFilePath = this.resolveImportPath(context.baseDir, filePath, moduleSpecifier, aliasConfig);
 
             if (importedFilePath) {
               if (importedFilePath.includes('node_modules')) {

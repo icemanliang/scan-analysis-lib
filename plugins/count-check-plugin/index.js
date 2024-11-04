@@ -35,7 +35,7 @@ class CountCheckPlugin {
   }
 
   apply(scanner) {
-    scanner.hooks.code.tapPromise('CountCheckPlugin', async (context) => {
+    scanner.hooks.code.tapPromise(this.name, async (context) => {
       try {
         context.logger.log('info', 'start count check...');
         this.baseDir = context.baseDir;

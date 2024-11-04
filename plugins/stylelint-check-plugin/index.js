@@ -32,7 +32,7 @@ class StylelintCheckPlugin {
   }
 
   async apply(scanner) {
-    scanner.hooks.code.tapPromise('StylelintCheckPlugin', async (context) => {
+    scanner.hooks.code.tapPromise(this.name, async (context) => {
       try {
         context.logger.log('info', 'Starting Stylelint check...');
         

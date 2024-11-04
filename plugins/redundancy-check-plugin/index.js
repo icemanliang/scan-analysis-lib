@@ -9,13 +9,11 @@ class RedundancyCheckPlugin {
   }
 
   apply(scanner) {
-    scanner.hooks.code.tapPromise('RedundancyCheckPlugin', async (context) => {
+    scanner.hooks.code.tapPromise(this.name, async (context) => {
       try {
         context.logger.log('info', 'Starting redundancy check...');
 
-        
-        console.log('context.root', context);
-        const srcPath = path.resolve(context.root, './src');
+        const srcPath = path.resolve(context.baseDir, './src');
         
         // 确保 srcPath 存在
         if (!fs.existsSync(srcPath)) {
@@ -23,7 +21,7 @@ class RedundancyCheckPlugin {
         }
 
         const options = {
-          path: [srcPath],  // 使用 context.root 作为扫描路径
+          path: [srcPath],
           ignore: [
             '**/node_modules/**/*',
             '**/dist/**',

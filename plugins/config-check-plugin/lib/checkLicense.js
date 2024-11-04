@@ -1,33 +1,26 @@
 const fs = require('fs');
 const path = require('path');
-
-function identifyLicense(content) {
-  if (content.includes('MIT License')) {
-    return 'MIT';
-  } else if (content.includes('Apache License')) {
-    return 'Apache';
-  } else if (content.includes('GNU GENERAL PUBLIC LICENSE')) {
-    return 'GPL';
-  } else if (content.includes('BSD')) {
-    return 'BSD';
-  } else {
-    return 'Unknown';
-  }
-}
-
-module.exports = async function checkLicense(rootDir) {
-  const filePath = path.join(rootDir, 'LICENSE');
-  const result = { exists: false, isValid: false, type: null };
+  
+module.exports = async function checkLicense(baseDir, config) {
+  const filePath = path.join(baseDir, 'LICENSE');
+  const result = { exists: false, isValid: false, errors: [] };
 
   if (fs.existsSync(filePath)) {
     result.exists = true;
     try {
       const content = fs.readFileSync(filePath, 'utf8');
-      result.type = identifyLicense(content);
-      result.isValid = result.type !== 'Unknown';
+      const licenseType = content.split('\n')[0].split(' ')[0];
+      
+      if (!config.validLicenses.includes(licenseType)) {
+        result.errors.push(`无效的许可证类型。支持的类型: ${config.validLicenses.join(', ')}`);
+      }
+
+      result.isValid = result.errors.length === 0;
     } catch (error) {
-      result.error = error.message;
+      result.errors.push(error.message);
     }
+  } else {
+    result.errors.push('LICENSE 文件不存在');
   }
 
   return result;

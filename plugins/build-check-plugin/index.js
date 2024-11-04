@@ -4,28 +4,34 @@ const htmlparser2 = require('htmlparser2');
 const postcss = require('postcss');
 const autoprefixer = require('autoprefixer');
 const browserslist = require('browserslist');
+const defaultConfig = require('./config');
+const HtmlChecker = require('./lib/html-checker');
 
 class BuildCheckPlugin {
-  constructor(options = {}) {
+  constructor(config = {}) {
     this.name = 'BuildCheckPlugin';
-    this.options = {
-      rootDir: './',
-      buildDir: 'dist',
-      unsafeCDNHosts: ['http://unsafecdn.com'],
-      ...options
+    this.config = {
+      ...defaultConfig,
+      ...config
     };
+    this.htmlChecker = new HtmlChecker(this.config.html);
   }
 
   apply(scanner) {
     scanner.hooks.build.tapPromise(this.name, async (context) => {
+      if(context.buildDir === '') {
+        context.logger.log('warn', 'build directory is not exists, skip build check.');
+        context.scanResults.buildInfo = null;
+        return;
+      }
       try {
-        context.logger.log('info', 'Starting build check...');
+        context.logger.log('info', 'starting build check...');
         
-        const buildPath = path.join(context.root, this.options.buildDir);
+        const buildPath = path.join(context.baseDir, context.buildDir);
         const stats = this.analyzeDirectory(buildPath);
         const htmlChecks = await this.checkHtmlFiles(buildPath);
         const jsChecks = await this.checkJsFiles(buildPath);
-        const cssChecks = await this.checkCssFiles(buildPath);
+        const cssChecks = await this.checkCssFiles(context.baseDir, buildPath);
 
         context.scanResults.buildInfo = {
           stats,
@@ -34,10 +40,10 @@ class BuildCheckPlugin {
           cssChecks
         };
 
-        context.logger.log('info', 'Build check completed.');
+        context.logger.log('info', 'build check completed.');
       } catch (error) {
         context.scanResults.buildInfo = null;
-        context.logger.log('error', `Error in plugin ${this.name}: ${error.message}`);
+        context.logger.log('error', `error in plugin ${this.name}: ${error.message}`);
       }
     });
   }
@@ -60,7 +66,7 @@ class BuildCheckPlugin {
       if (ext === '.html') category = 'html';
       else if (ext === '.js') category = 'js';
       else if (ext === '.css') category = 'css';
-      else if (['.jpg', '.jpeg', '.png', '.gif', '.svg', '.mp4', '.webm', '.woff', '.woff2', '.ttf', '.eot'].includes(ext)) category = 'media';
+      else if (this.config.fileTypes.media.includes(ext)) category = 'media';
       else category = 'other';
 
       stats[category].count++;
@@ -91,44 +97,23 @@ class BuildCheckPlugin {
     const results = [];
 
     for (const file of htmlFiles) {
-      const filePath = path.join(buildPath, file);
-      const content = fs.readFileSync(filePath, 'utf-8');
-      const result = {
-        file,
-        unsafeCDN: [],
-        jsPrefetch: false,
-        cssPreload: false,
-        fontPreload: false,
-        fontCrossOrigin: false
-      };
-
-      const parser = new htmlparser2.Parser({
-        onopentag: (name, attribs) => {
-          if (name === 'script' && attribs.src) {
-            const src = attribs.src;
-            if (this.options.unsafeCDNHosts.some(host => src.includes(host))) {
-              result.unsafeCDN.push(src);
-            }
-            if (attribs.rel === 'prefetch') {
-              result.jsPrefetch = true;
-            }
-          }
-          if (name === 'link' && attribs.rel === 'stylesheet' && attribs.rel === 'preload') {
-            result.cssPreload = true;
-          }
-          if (name === 'link' && attribs.rel === 'preload' && attribs.as === 'font') {
-            result.fontPreload = true;
-            if (attribs.crossorigin === 'anonymous') {
-              result.fontCrossOrigin = true;
-            }
-          }
-        }
-      });
-
-      parser.write(content);
-      parser.end();
-
-      results.push(result);
+      try {
+        const filePath = path.join(buildPath, file);
+        const content = fs.readFileSync(filePath, 'utf-8');
+        const dom = htmlparser2.parseDocument(content);
+        
+        const checkResult = this.htmlChecker.check(dom);
+        results.push({
+          file,
+          ...checkResult
+        });
+      } catch (error) {
+        results.push({
+          file,
+          errors: [`Failed to process file: ${error.message}`],
+          warnings: []
+        });
+      }
     }
 
     return results;
@@ -154,10 +139,11 @@ class BuildCheckPlugin {
   }
 
   isMinified(content) {
-    return content.split('\n').length < 5 || content.length / content.split('\n').length > 100;
+    const { minLines, maxLineLength } = this.config.minification;
+    return content.split('\n').length < minLines || content.length / content.split('\n').length > maxLineLength;
   }
 
-  async checkCssFiles(buildPath) {
+  async checkCssFiles(baseDir, buildPath) {
     const cssFiles = fs.readdirSync(buildPath).filter(file => path.extname(file).toLowerCase() === '.css');
     const results = [];
 
@@ -166,7 +152,7 @@ class BuildCheckPlugin {
       const content = fs.readFileSync(filePath, 'utf-8');
       const result = {
         file,
-        prefixCheck: await this.checkCssPrefixes(content),
+        prefixCheck: await this.checkCssPrefixes(baseDir, content),
         isMinified: this.isCssMinified(content)
       };
       results.push(result);
@@ -175,9 +161,9 @@ class BuildCheckPlugin {
     return results;
   }
 
-  async checkCssPrefixes(css) {
-    const browsers = browserslist.loadConfig({ path: this.options.rootDir });
-    const prefixer = postcss([autoprefixer({ browsers })]);
+  async checkCssPrefixes(baseDir, css) {
+    const browsers = browserslist.loadConfig({ path: baseDir });
+    const prefixer = postcss([autoprefixer({ overrideBrowserslist: browsers })]);
     const result = await prefixer.process(css, { from: undefined });
     return {
       missingPrefixes: result.warnings().length > 0,
@@ -186,7 +172,8 @@ class BuildCheckPlugin {
   }
 
   isCssMinified(content) {
-    return content.split('\n').length < 5 || content.length / content.split('\n').length > 100;
+    const { minLines, maxLineLength } = this.config.minification;
+    return content.split('\n').length < minLines || content.length / content.split('\n').length > maxLineLength;
   }
 }
 

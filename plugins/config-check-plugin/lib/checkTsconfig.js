@@ -1,53 +1,61 @@
 const fs = require('fs');
 const path = require('path');
 
-module.exports = async function checkTsconfig(rootDir, options = {}) {
-  const filePath = path.join(rootDir, 'tsconfig.json');
+module.exports = async function checkTsconfig(baseDir, config) {
+  const filePath = path.join(baseDir, 'tsconfig.json');
   const result = { exists: false, isValid: false, errors: [] };
-
-  const recommendedOptions = options.recommendedOptions || {
-    "target": "esnext",
-    "module": "esnext",
-    "allowJs": true,
-    "strict": true,
-    "outDir": "./dist",
-    "jsx": "react",
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noImplicitReturns": true,
-    "resolveJsonModule": true,
-    "moduleResolution": "node",
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "noImplicitAny": true,
-    "skipLibCheck": true,
-    "lib": ["esnext", "dom", "WebWorker"]
-  };
 
   if (fs.existsSync(filePath)) {
     result.exists = true;
     try {
-      const config = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-      
-      if (!config.compilerOptions) {
-        result.errors.push("Missing compilerOptions in tsconfig.json");
+      const tsConfig = await loadConfig(filePath);
+
+      if (!tsConfig.compilerOptions) {
+        result.errors.push('缺少 compilerOptions 配置');
       } else {
-        for (const [key, value] of Object.entries(recommendedOptions)) {
-          if (!config.compilerOptions.hasOwnProperty(key)) {
-            result.errors.push(`Missing recommended option: ${key}`);
-          } else if (JSON.stringify(config.compilerOptions[key]) !== JSON.stringify(value)) {
-            result.errors.push(`Incorrect value for ${key}. Expected: ${JSON.stringify(value)}, Got: ${JSON.stringify(config.compilerOptions[key])}`);
+        Object.entries(config.compilerOptions).forEach(([option, expectedValue]) => {
+          const actualValue = tsConfig.compilerOptions[option];
+          
+          if (actualValue === undefined) {
+            result.errors.push(`缺少 compilerOptions.${option} 配置`);
+          } else if (Array.isArray(expectedValue)) {
+            if (!Array.isArray(actualValue) || 
+                !expectedValue.every(item => actualValue.includes(item))) {
+              result.errors.push(`compilerOptions.${option} 必须包含 ${expectedValue.join(', ')}`);
+            }
+          } else if (typeof expectedValue === 'boolean') {
+            if (actualValue !== expectedValue) {
+              result.errors.push(`compilerOptions.${option} 必须设置为 ${expectedValue}`);
+            }
+          } else if (actualValue !== expectedValue) {
+            result.errors.push(`compilerOptions.${option} 必须设置为 ${expectedValue}`);
           }
-        }
+        });
       }
 
       result.isValid = result.errors.length === 0;
     } catch (error) {
-      result.errors.push(`Error parsing tsconfig.json: ${error.message}`);
+      result.errors.push(`解析 tsconfig.json 时出错: ${error.message}`);
     }
   } else {
-    result.errors.push("tsconfig.json file does not exist");
+    result.errors.push('tsconfig.json 文件不存在');
   }
 
   return result;
 };
+
+async function loadConfig(filePath) {
+  const content = fs.readFileSync(filePath, 'utf8');
+  try {
+    const normalizedContent = content
+      .replace(/\/\*[\s\S]*?\*\//g, '') // 移除多行注释
+      .replace(/\/\/.*/g, '') // 移除单行注释
+      .replace(/,(\s*[}\]])/g, '$1') // 移除尾随逗号
+      .replace(/'/g, '"') // 替换单引号为双引号
+      .replace(/([{,]\s*)(\w+)(\s*:)/g, '$1"$2"$3'); // 给属性名加上双引号
+    
+    return JSON.parse(normalizedContent);
+  } catch (error) {
+    throw new Error(`JSON 解析错误: ${error.message}`);
+  }
+}

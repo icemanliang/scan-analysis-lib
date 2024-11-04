@@ -1,33 +1,18 @@
 const fs = require('fs');
 const path = require('path');
 
-module.exports = async function checkEslintrc(rootDir) {
-  const possibleFiles = ['.eslintrc.js', '.eslintrc.json', '.eslintrc.yaml', '.eslintrc.yml', '.eslintrc'];
+module.exports = async function checkEslintrc(baseDir, config) {
   let result = { exists: false, isValid: false, errors: [] };
-  let config;
+  let eslintConfig;
 
-  for (const file of possibleFiles) {
-    const filePath = path.join(rootDir, file);
+  // 检查配置文件是否存在
+  for (const file of config.possibleFiles) {
+    const filePath = path.join(baseDir, file);
     if (fs.existsSync(filePath)) {
       result.exists = true;
-      result.filePath = filePath;
+      result.filePath = path.relative(baseDir, filePath);
       try {
-        if (file.endsWith('.js')) {
-          config = require(filePath);
-        } else if (file.endsWith('.json') || file === '.eslintrc') {
-          const content = fs.readFileSync(filePath, 'utf8');
-          try {
-            config = JSON.parse(content);
-          } catch (jsonError) {
-            // 尝试修复常见的 JSON 错误
-            const fixedContent = content.replace(/'/g, '"').replace(/,\s*}/g, '}');
-            config = JSON.parse(fixedContent);
-          }
-        } else {
-          // 对于 YAML 文件，我们需要一个 YAML 解析器
-          result.errors.push(`不支持的文件格式: ${file}`);
-          continue;
-        }
+        eslintConfig = await loadConfig(filePath);
         break;
       } catch (error) {
         result.errors.push(`解析 ${file} 时出错: ${error.message}`);
@@ -36,63 +21,90 @@ module.exports = async function checkEslintrc(rootDir) {
     }
   }
 
-  if (!result.exists) {
-    result.errors.push('未找到 ESLint 配置文件');
+  if (!result.exists || !eslintConfig) {
+    result.errors.push('未找到或无法解析 ESLint 配置文件');
     return result;
   }
 
-  if (!config) {
-    result.errors.push('无法解析 ESLint 配置文件');
-    return result;
-  }
-
-  // 检查 parser
-  const tsConfigPath = path.join(rootDir, 'tsconfig.json');
-  const isTypeScript = fs.existsSync(tsConfigPath);
-  const expectedParser = isTypeScript ? '@typescript-eslint/parser' : '@babel/eslint-parser';
-
-  if (config.parser !== expectedParser) {
-    result.errors.push(`parser 应该为 "${expectedParser}"`);
-  }
-
-  // 检查 extends
-  if (!Array.isArray(config.extends)) {
+  // 检查 extends 数组的有效性
+  if (!Array.isArray(eslintConfig.extends)) {
     result.errors.push('extends 应该是一个数组');
     return result;
   }
 
-  const packageJsonPath = path.join(rootDir, 'package.json');
-  let packageJson;
-  try {
-    packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
-  } catch (error) {
+  // 检查 extends 数组中的每个项是否为字符串
+  const hasInvalidExtend = eslintConfig.extends.some(ext => typeof ext !== 'string');
+  if (hasInvalidExtend) {
+    result.errors.push('extends 数组中的所有项必须是字符串');
+    return result;
+  }
+
+  // 检查 parser
+  const tsConfigPath = path.join(baseDir, 'tsconfig.json');
+  const isTypeScript = fs.existsSync(tsConfigPath);
+  const expectedParser = isTypeScript ? config.parser.typescript : config.parser.javascript;
+
+  if (eslintConfig.parser !== expectedParser) {
+    result.errors.push(`parser 应该为 "${expectedParser}"`);
+  }
+
+  // 检查项目类型并验证相应的配置
+  const packageJson = await loadPackageJson(baseDir);
+  if (!packageJson) {
     result.errors.push('无法读取或解析 package.json');
     return result;
   }
 
-  const isReact = packageJson.dependencies && (packageJson.dependencies.react || packageJson.dependencies['react-dom']);
-  const isVue = packageJson.dependencies && packageJson.dependencies.vue;
+  const { dependencies = {} } = packageJson;
+  const isReact = config.dependencies.react.some(dep => dependencies[dep]);
+  const isVue = config.dependencies.vue.some(dep => dependencies[dep]);
 
-  const customEslintConfig = '@iceman/eslint-config'; // 可配置的自定义 ESLint 配置包
-
-  if (config.extends.includes(customEslintConfig)) {
-    result.isValid = true;
-  } else if (isReact) {
-    const validReactConfigs = [
-      ['airbnb', 'airbnb/hooks'],
-      ['eslint:recommended', 'plugin:react/recommended', 'plugin:react-hooks/recommended']
-    ];
-    result.isValid = validReactConfigs.some(conf => 
-      conf.every(item => config.extends.includes(item)) &&
-      !(config.extends.includes('airbnb') && config.extends.includes('eslint:recommended'))
-    );
-  } else if (isVue) {
-    result.isValid = config.extends.includes('plugin:vue/recommended') && config.extends.includes('eslint:recommended');
+  // 检查配置有效性
+  if (!eslintConfig.extends.includes(config.customConfig)) {
+    if (isReact) {
+      const hasValidConfig = config.validReactConfigs.some(conf => 
+        conf.every(item => eslintConfig.extends.includes(item))
+      );
+      if (!hasValidConfig) {
+        result.errors.push(`React 项目必须包含以下配置组合之一: ${JSON.stringify(config.validReactConfigs)}`);
+      }
+    } else if (isVue) {
+      const hasValidConfig = config.validVueConfigs.every(conf => eslintConfig.extends.includes(conf));
+      if (!hasValidConfig) {
+        result.errors.push(`Vue 项目必须包含以下配置: ${config.validVueConfigs.join(', ')}`);
+      }
+    }
   }
 
-  if (!result.isValid) {
-    result.errors.push('extends 配置不符合要求');
-  }
-
+  // 根据 errors 数组判断 isValid
+  result.isValid = result.errors.length === 0;
   return result;
 };
+
+async function loadConfig(filePath) {
+  if (filePath.endsWith('.js')) {
+    return require(filePath);
+  }
+  const content = fs.readFileSync(filePath, 'utf8');
+  try {
+    // 统一处理 JSON 格式
+    const normalizedContent = content
+      .replace(/\/\*[\s\S]*?\*\//g, '') // 移除多行注释
+      .replace(/\/\/.*/g, '') // 移除单行注释
+      .replace(/,(\s*[}\]])/g, '$1') // 移除尾随逗号
+      .replace(/'/g, '"'); // 替换单引号为双引号
+    
+    return JSON.parse(normalizedContent);
+  } catch (error) {
+    throw new Error(`JSON 解析错误: ${error.message}`);
+  }
+}
+
+async function loadPackageJson(baseDir) {
+  try {
+    const content = fs.readFileSync(path.join(baseDir, 'package.json'), 'utf8');
+    return JSON.parse(content);
+  } catch {
+    return null;
+  }
+}

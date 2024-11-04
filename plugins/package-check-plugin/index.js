@@ -2,116 +2,23 @@ const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
 const yaml = require('js-yaml');
-
+const defaultConfig = require('./config');
 class PackageCheckPlugin {
-  constructor(options = {}) {
+  constructor(config = {}) {
     this.name = 'PackageCheckPlugin';
-    this.options = {
-      privatePackagePrefix: '@shein',
-      riskThreshold: {
-        lastUpdateMonths: 12,
-        monthlyDownloads: 1000
-      },
-      licenses: {
-        safe: [
-          'MIT', 
-          'ISC', 
-          'BSD-2-Clause',
-          'BSD-3-Clause', 
-          'Apache-2.0',
-          'CC0-1.0',
-          '0BSD'
-        ],
-        risky: [
-          'GPL-2.0',
-          'GPL-3.0',
-          'AGPL-3.0',
-          'LGPL-2.1',
-          'LGPL-3.0',
-          'MPL-2.0',
-          'CPAL-1.0',
-          'EPL-1.0',
-          'EPL-2.0'
-        ]
-      },
-      similarPackages: [
-        // 日期处理
-        ['moment', 'dayjs', 'date-fns'],
-        // HTTP 请求
-        ['axios', 'request', 'node-fetch'],
-        // 工具库
-        ['lodash', 'underscore'],   
-        // 状态管理
-        ['redux', 'mobx', 'vuex'],
-        // 测试框架
-        ['jest', 'mocha', 'vitest'],
-        // E2E 测试
-        ['cypress', 'playwright', 'puppeteer', 'selenium-webdriver'],
-        // 打包工具
-        ['webpack', 'rollup', 'parcel', 'esbuild', 'vite'],
-        // 进程管理
-        ['pm2', 'forever', 'nodemon', 'supervisor'],
-        // 命令行工具
-        ['commander', 'yargs', 'meow', 'minimist'],
-        // 日志工具
-        ['winston', 'bunyan', 'pino', 'log4js'],
-      ],
-      versionUpgrades: {
-        // 构建工具
-        webpack: {
-          minVersion: '5.0.0',
-          message: '建议升级到 webpack 5 以获得更好的构建性能和模块联邦特性'
-        },
-        vite: {
-          minVersion: '4.0.0',
-          message: '建议升级到 vite 4+ 以获得更好的性能和稳定性'
-        },
-        // 框架相关
-        react: {
-          minVersion: '16.8.2',
-          message: '建议升级到支持 Hooks 的 React 版本'
-        },
-        'react-dom': {
-          minVersion: '16.8.2',
-          message: '建议与 React 版本保持一致，升级到支持 Hooks 的版本'
-        },
-        vue: {
-          minVersion: '3.0.0',
-          message: '建议升级到 Vue 3 以使用组合式 API 和更好的 TypeScript 支持'
-        },
-        // 工具链
-        '@babel/core': {
-          minVersion: '7.0.0',
-          message: '建议升级到 Babel 7 以获得更好的性能和特性支持'
-        },
-        husky: {
-          minVersion: '8.0.0',
-          message: '建议升级到 husky v8+ 以使用新的配置方式和更好的 Git Hooks 支持'
-        },
-        typescript: {
-          minVersion: '4.5.0',
-          message: '建议升级到 TypeScript 4.5+ 以获得更好的类型推导和语言特性'
-        },
-        eslint: {
-          minVersion: '8.0.0',
-          message: '建议升级到 ESLint 8 以获得更好的性能和规则支持'
-        },
-        prettier: {
-          minVersion: '2.0.0',
-          message: '建议升级到 Prettier 2+ 以获得更好的格式化支持'
-        }
-      },
-      ...options
+    this.config = {
+      ...defaultConfig,
+      ...config
     };
   }
 
   async apply(scanner) {
     scanner.hooks.dependency.tapPromise(this.name, async (context) => {
       try {
-        context.logger.log('info', 'Starting dependency check...');
+        context.logger.log('info', 'starting package check...');
         
-        const packageJson = this.readPackageJson(context.root);
-        const lockFile = this.findLockFile(context.root);
+        const packageJson = this.readPackageJson(context.baseDir);
+        const lockFile = this.findLockFile(context.baseDir);
         const dependencies = this.analyzeDependencies(packageJson, lockFile);
         
         const privatePackages = this.identifyPrivatePackages(dependencies);
@@ -124,10 +31,10 @@ class PackageCheckPlugin {
         };
 
         context.scanResults.packageInfo = analysis;
-        context.logger.log('info', 'Dependency check completed.');
+        context.logger.log('info', 'package check completed.');
       } catch (error) {
         context.scanResults.packageInfo = null;
-        context.logger.log('error', `Error in plugin ${this.name}: ${error.message}`);
+        context.logger.log('error', `error in plugin ${this.name}: ${error.message}`);
       }
     });
   }
@@ -207,14 +114,14 @@ class PackageCheckPlugin {
           return null;
       }
     } catch (error) {
-      console.error(`Error reading lock file for ${packageName}:`, error.message);
+      console.error(`error reading lock file for ${packageName}:`, error.message);
       return null;
     }
   }
 
   identifyPrivatePackages(dependencies) {
     return Object.keys(dependencies).filter(name => 
-      name.startsWith(this.options.privatePackagePrefix)
+      name.startsWith(this.config.privatePackagePrefix)
     );
   }
 
@@ -233,12 +140,12 @@ class PackageCheckPlugin {
       const license = npmInfo.license;
 
       const hasLicenseRisk = !license || 
-                            this.options.licenses.risky.includes(license) || 
-                            !this.options.licenses.safe.includes(license);
+                            this.config.licenses.risky.includes(license) || 
+                            !this.config.licenses.safe.includes(license);
 
-      if (lastModifiedMonths > this.options.riskThreshold.lastUpdateMonths ||
-          lastPublishMonths > this.options.riskThreshold.lastUpdateMonths ||
-          monthlyDownloads < this.options.riskThreshold.monthlyDownloads ||
+      if (lastModifiedMonths > this.config.riskThreshold.lastUpdateMonths ||
+          lastPublishMonths > this.config.riskThreshold.lastUpdateMonths ||
+          monthlyDownloads < this.config.riskThreshold.monthlyDownloads ||
           hasLicenseRisk) {
         riskPackages.push({
           name,
@@ -257,7 +164,7 @@ class PackageCheckPlugin {
 
   checkSimilarPackages(dependencies) {
     const installedSimilarPackages = [];
-    for (const group of this.options.similarPackages) {
+    for (const group of this.config.similarPackages) {
       const installed = group.filter(pkg => dependencies[pkg]);
       if (installed.length > 1) {
         installedSimilarPackages.push(installed);
@@ -268,7 +175,7 @@ class PackageCheckPlugin {
 
   async fetchNpmPackageInfo(packageName) {
     try {
-      const response = await axios.get(`https://registry.npmjs.org/${packageName}`);
+      const response = await axios.get(`${this.config.packageInfoApi}${packageName}`);
       return response.data;
     } catch (error) {
       console.error(`Error fetching npm info for ${packageName}:`, error.message);
@@ -286,7 +193,7 @@ class PackageCheckPlugin {
 
   async getMonthlyDownloads(packageName) {
     try {
-      const response = await axios.get(`https://api.npmjs.org/downloads/point/last-month/${packageName}`);
+      const response = await axios.get(`${this.config.downloadInfoApi}${packageName}`);
       return response.data.downloads;
     } catch (error) {
       console.error(`Error fetching download stats for ${packageName}:`, error.message);
@@ -296,29 +203,32 @@ class PackageCheckPlugin {
 
   getRiskReason(lastModifiedMonths, lastPublishMonths, monthlyDownloads, license) {
     const reasons = [];
-    if (lastModifiedMonths > this.options.riskThreshold.lastUpdateMonths) {
-      reasons.push('long-time-no-modification');
+
+    if (lastModifiedMonths > 12) {
+      reasons.push(`超过 ${lastModifiedMonths} 个月未更新代码`);
     }
-    if (lastPublishMonths > this.options.riskThreshold.lastUpdateMonths) {
-      reasons.push('long-time-no-publish');
+
+    if (lastPublishMonths > 12) {
+      reasons.push(`超过 ${lastPublishMonths} 个月未发布新版本`);
     }
-    if (monthlyDownloads < this.options.riskThreshold.monthlyDownloads) {
-      reasons.push('low-usage');
+
+    if (monthlyDownloads < 1000) {
+      reasons.push(`月下载量较低(${monthlyDownloads})`);
     }
+
     if (!license) {
-      reasons.push('missing-license');
-    } else if (this.options.licenses.risky.includes(license)) {
-      reasons.push('risky-license');
-    } else if (!this.options.licenses.safe.includes(license)) {
-      reasons.push('unknown-license');
+      reasons.push('未声明开源协议');
+    } else if (!['MIT', 'ISC', 'Apache-2.0', 'BSD-3-Clause'].includes(license)) {
+      reasons.push(`使用了非主流开源协议(${license})`);
     }
-    return reasons.join(', ');
+
+    return reasons;
   }
 
   getLicenseRiskLevel(license) {
     if (!license) return 'high';
-    if (this.options.licenses.risky.includes(license)) return 'medium';
-    if (!this.options.licenses.safe.includes(license)) return 'unknown';
+    if (this.config.licenses.risky.includes(license)) return 'medium';
+    if (!this.config.licenses.safe.includes(license)) return 'unknown';
     return 'safe';
   }
 
@@ -326,10 +236,10 @@ class PackageCheckPlugin {
     // console.log('=========>',dependencies);
     const upgrades = [];
     for (const [name, version] of Object.entries(dependencies)) {
-      const upgrade = this.options.versionUpgrades[name];
+      const upgrade = this.config.versionUpgrades[name];
       if (upgrade) {
         try {
-          console.log('=========>',name,version);
+          // console.log('=========>',name,version);
           // 获取当前版本的主版本号
           const currentMajor = this.getMajorVersion(version);
           const recommendedMajor = this.getMajorVersion(upgrade.minVersion);
