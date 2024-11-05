@@ -2,20 +2,14 @@ const { Project } = require('ts-morph');
 const path = require('path');
 const fs = require('fs');
 const jsonc = require('jsonc-parser');
+const defaultConfig = require('./config');
 
 class DependencyCheckPlugin {
-  constructor(options = {}) {
+  constructor(config = {}) {
     this.name = 'DependencyCheckPlugin';
-    this.options = {
-      aliasConfig: {
-        "@src/*": "./src/*",
-        "@components/*": "./src/components/*",
-        "@utils/*": "./src/utils/*",
-        "@hooks/*": "./src/hooks/*",
-        "@assets/*": "./src/assets/*",
-      },
-      detailedImportPackages: ['react', 'lodash'], // 需要详细导入信息的包
-      ...options
+    this.config = {
+      ...defaultConfig,
+      ...config
     };
   }
 
@@ -23,22 +17,31 @@ class DependencyCheckPlugin {
     scanner.hooks.dependency.tapPromise(this.name, async (context) => {
       try {
         context.logger.log('info', 'Starting dependency check...');
-        const aliasConfig = this.getAliasConfig(context.baseDir);
+        const compilerOptions = this.getCompilerOptions(context.baseDir);
+        if(context.aliasConfig && Object.keys(context.aliasConfig).length > 0) {
+          // console.log('context.aliasConfig', context.aliasConfig);
+          compilerOptions.paths = {
+            ...compilerOptions.paths,
+            ...context.aliasConfig
+          };
+        }
+
         const project = new Project({
-          tsConfigFilePath: path.join(context.baseDir, 'tsconfig.json')
+          compilerOptions: compilerOptions
         });
 
-        project.addSourceFilesAtPaths("src/**/*.{ts,tsx,js,jsx}");
+        project.addSourceFilesAtPaths(path.join(context.baseDir, context.codeDir, "**/*.{ts,tsx,js,jsx}"));
 
         const internalDependencies = {};
         const externalDependencies = {};
         
         project.getSourceFiles().forEach(sourceFile => {
           const filePath = sourceFile.getFilePath();
+          // console.log('filePath', filePath);
           
           sourceFile.getImportDeclarations().forEach(importDecl => {
             const moduleSpecifier = importDecl.getModuleSpecifierValue();
-            const importedFilePath = this.resolveImportPath(context.baseDir, filePath, moduleSpecifier, aliasConfig);
+            const importedFilePath = this.resolveImportPath(context.baseDir, filePath, moduleSpecifier, compilerOptions.paths);
 
             if (importedFilePath) {
               if (importedFilePath.includes('node_modules')) {
@@ -48,25 +51,28 @@ class DependencyCheckPlugin {
                   externalDependencies[packageName] = { count: 0, dependents: [], detailedImports: {} };
                 }
                 externalDependencies[packageName].count += 1;
-                externalDependencies[packageName].dependents.push(filePath);
+                externalDependencies[packageName].dependents.push(path.relative(context.baseDir, filePath));
 
                 // 如果是需要详细导入信息的包，收集导入的具体内容
-                if (this.options.detailedImportPackages.includes(packageName)) {
+                if (this.config.detailedImportPackages.includes(packageName)) {
                   const importedNames = importDecl.getNamedImports().map(named => named.getName());
                   const defaultImport = importDecl.getDefaultImport()?.getText();
                   if (defaultImport) importedNames.unshift(defaultImport);
-                  if (!externalDependencies[packageName].detailedImports[filePath]) {
-                    externalDependencies[packageName].detailedImports[filePath] = [];
+
+                  const formattedFilePath = path.relative(context.baseDir, filePath);
+                  if (!externalDependencies[packageName].detailedImports[formattedFilePath]) {
+                    externalDependencies[packageName].detailedImports[formattedFilePath] = [];
                   }
-                  externalDependencies[packageName].detailedImports[filePath].push(...importedNames);
+                  externalDependencies[packageName].detailedImports[formattedFilePath].push(...importedNames);
                 }
               } else {
                 // 内部依赖
-                if (!internalDependencies[importedFilePath]) {
-                  internalDependencies[importedFilePath] = { count: 0, dependents: [] };
+                const formattedImportedFilePath = path.relative(context.baseDir, importedFilePath);
+                if (!internalDependencies[formattedImportedFilePath]) {
+                  internalDependencies[formattedImportedFilePath] = { count: 0, dependents: [] };
                 }
-                internalDependencies[importedFilePath].count += 1;
-                internalDependencies[importedFilePath].dependents.push(filePath);
+                internalDependencies[formattedImportedFilePath].count += 1;
+                internalDependencies[formattedImportedFilePath].dependents.push(path.relative(context.baseDir, filePath));
               }
             }
           });
@@ -81,23 +87,24 @@ class DependencyCheckPlugin {
     });
   }
 
-  getAliasConfig(rootDir) {
-    const tsConfigPath = path.join(rootDir, 'tsconfig.json');
+  getCompilerOptions(baseDir) {
+    const tsConfigPath = path.join(baseDir, 'tsconfig.json');
     if (fs.existsSync(tsConfigPath)) {
       try {
         const tsConfigContent = fs.readFileSync(tsConfigPath, 'utf8');
         const tsConfig = jsonc.parse(tsConfigContent);
-        if (tsConfig.compilerOptions?.paths) {
-          return tsConfig.compilerOptions.paths;
+        if (tsConfig?.compilerOptions) {
+          // console.log('tsConfig.compilerOptions', tsConfig.compilerOptions);
+          return tsConfig.compilerOptions;
         }
       } catch (error) {
         console.error('Error reading tsconfig.json:', error);
       }
     }
-    return this.options.aliasConfig;
+    return this.config.compilerOptions;
   }
 
-  resolveImportPath(rootDir, currentFilePath, moduleSpecifier, aliasConfig) {
+  resolveImportPath(baseDir, currentFilePath, moduleSpecifier, aliasConfig) {
     // 处理相对路径导入
     if (moduleSpecifier.startsWith('.')) {
       return this.resolveFileWithExtensions(path.resolve(path.dirname(currentFilePath), moduleSpecifier));
@@ -108,14 +115,14 @@ class DependencyCheckPlugin {
       const regexAlias = new RegExp(`^${alias.replace('*', '(.*)')}$`);
       const match = moduleSpecifier.match(regexAlias);
       if (match) {
-        const resolvedPath = path.join(rootDir, aliasPath[0].replace('*', match[1]));
+        const resolvedPath = path.join(baseDir, aliasPath[0].replace('*', match[1]));
         const result = this.resolveFileWithExtensions(resolvedPath);
         if (result) return result;
       }
     }
 
     // 处理 node_modules 导入
-    const nodeModulesPath = path.join(rootDir, 'node_modules', moduleSpecifier);
+    const nodeModulesPath = path.join(baseDir, 'node_modules', moduleSpecifier);
     if (fs.existsSync(nodeModulesPath)) {
       return nodeModulesPath;
     }

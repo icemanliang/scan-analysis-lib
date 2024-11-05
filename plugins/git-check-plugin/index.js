@@ -16,15 +16,15 @@ class GitCheckPlugin {
   apply(scanner) {
     scanner.hooks.project.tapPromise(this.name, async (context) => {
       try {
-        context.logger.log('info', 'Starting git checks...');
+        context.logger.log('info', 'starting git checks...');
 
         const results = await this.runChecks(context.baseDir, context.codeDir);
         context.scanResults.gitInfo = results;
         
-        context.logger.log('info', 'Git checks completed.');
+        context.logger.log('info', 'git checks completed.');
       } catch (error) {
         context.scanResults.gitInfo = null;
-        context.logger.log('error', `Error in plugin ${this.name}: ${error.message}`);
+        context.logger.log('error', `error in plugin ${this.name}: ${error.message}`);
       }
     });
   }
@@ -38,7 +38,11 @@ class GitCheckPlugin {
       },
       invalidCommits: [],
       huskyCheck: { exists: false, isValid: false, errors: [] },
-      gitignoreCheck: { exists: false, isValid: false, errors: [] }
+      gitignoreCheck: { exists: false, isValid: false, errors: [] },
+      directoryDepth: {
+        maxDepth: 0,
+        deepDirectories: []
+      }
     };
 
     // 文件分析
@@ -58,6 +62,14 @@ class GitCheckPlugin {
     results.huskyCheck = await this.checkHusky(baseDir);
     results.gitignoreCheck = await this.checkGitignore(baseDir);
     results.invalidCommits = await this.checkCommitMessages(baseDir);
+
+    // 添加目录深度检查
+    const depthResults = await this.analyzeDirectoryDepth(
+      baseDir,
+      codeDir,
+      this.config.directory?.maxAllowedDepth || 5  // 默认阈值为5
+    );
+    results.directoryDepth = depthResults;
 
     return results;
   }
@@ -94,7 +106,9 @@ class GitCheckPlugin {
     const fileName = path.basename(filePath, path.extname(filePath));
     if (!this.isValidNaming(fileName)) {
       const relativePath = path.relative(baseDir, filePath);
-      results.namingIssues.files.push(relativePath);
+      if (!this.config.naming.whitelist.some(item => relativePath.endsWith(item))) {
+        results.namingIssues.files.push(relativePath);
+      }
     }
   }
 
@@ -173,6 +187,45 @@ class GitCheckPlugin {
     } catch (error) {
       result.errors.push(error.message);
     }
+
+    return result;
+  }
+
+  async analyzeDirectoryDepth(baseDir, codeDir, threshold) {
+    // console.log('threshold:', threshold);
+    const basePath = path.join(baseDir, codeDir);
+    const result = {
+      maxDepth: 0,
+      deepDirectories: []
+    };
+
+    // 获取所有目录
+    const directories = await glob('**/', {
+      cwd: basePath,
+      onlyDirectories: true,
+      dot: false  // 忽略隐藏目录
+    });
+
+    directories.forEach(dir => {
+      // 计算目录深度（通过计算路径分隔符的数量）
+      const depth = (dir.match(/\//g) || []).length + 1;
+      
+      // 更新最大深度
+      result.maxDepth = Math.max(result.maxDepth, depth);
+
+      // 如果深度超过阈值，添加到 deepDirectories
+      if (depth > threshold) {
+        // 构建完整路径（相对于项目根目录）
+        const fullPath = path.join(codeDir, dir);
+        result.deepDirectories.push({
+          path: fullPath,
+          depth: depth
+        });
+      }
+    });
+
+    // 按深度降序排序
+    result.deepDirectories.sort((a, b) => b.depth - a.depth);
 
     return result;
   }

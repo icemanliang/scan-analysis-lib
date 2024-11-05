@@ -66,10 +66,6 @@ class ConfigCheckPlugin {
           const checkBrowserslist = require('./lib/checkBrowserslist');
           results.browserslist = await checkBrowserslist(context.baseDir, this.config.browserslist);
         }
-        if (checks.ejsTemplates) {
-          const checkEjsTemplates = require('./lib/checkEjsTemplates');
-          results.ejsTemplates = await checkEjsTemplates(context.baseDir, this.config.ejsTemplates);
-        }
 
         context.scanResults.configInfo = results;
         context.logger.log('info', 'config check completed.');

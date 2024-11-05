@@ -30,12 +30,12 @@ function validateSourceItem(source, index) {
     throw new Error(`sources[${index}].buildDir must be a string`);
   }
 
-  // aliasMap 属性检查（必须存在且为对象，允许空对象）
-  if (!('aliasMap' in source)) {
-    throw new Error(`sources[${index}] missing required property: aliasMap`);
+  // aliasConfig 属性检查（必须存在且为对象，允许空对象）
+  if (!('aliasConfig' in source)) {
+    throw new Error(`sources[${index}] missing required property: aliasConfig`);
   }
-  if (typeof source.aliasMap !== 'object' || source.aliasMap === null || Array.isArray(source.aliasMap)) {
-    throw new Error(`sources[${index}].aliasMap must be an object`);
+  if (typeof source.aliasConfig !== 'object' || source.aliasConfig === null || Array.isArray(source.aliasConfig)) {
+    throw new Error(`sources[${index}].aliasConfig must be an object`);
   }
 
   // 目录存在性检查

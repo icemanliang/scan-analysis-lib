@@ -16,7 +16,6 @@ module.exports = {
     license: true,
     ignoreFiles: true,
     browserslist: true,
-    // ejsTemplates: true
   },
 
   // commitlint 相关配置
@@ -171,20 +170,6 @@ module.exports = {
   // node 版本相关配置
   nodeVersion: {
     versionPattern: /^v?\d+\.\d+\.\d+$/
-  },
-
-  // ejs 模板相关配置
-  ejsTemplates: {
-    requiredTags: {
-      doctype: '<!DOCTYPE html>',
-      charset: '<meta charset="UTF-8">',
-      viewport: '<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">',
-    },
-    requiredMetaTags: ['description', 'keywords'],
-    requiredResources: [], // 可配置的必需外部资源
-    performanceOptimization: ['dns-prefetch', 'preconnect'],
-    securityHeaders: ['content-security-policy'],
-    checkMobile: true,
   },
 
   // tsconfig 相关配置

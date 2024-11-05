@@ -10,7 +10,18 @@ module.exports = {
       lowercase: /^[a-z]+$/,
       // kebab-case
       kebabCase: /^[a-z]+(-[a-z]+)*$/
-    }
+    },
+    whitelist: [
+      '.d.ts',
+      '404.vue',
+      '404.tsx',
+      '404.css',
+      '404.gif',
+      '404.png',
+      '404.jpg',
+      '404.jpeg',
+      '404.svg'
+    ]
   },
 
   // Git 相关配置
@@ -41,5 +52,9 @@ module.exports = {
       'dist/',
       '.DS_Store'
     ]
+  },
+
+  directory: {
+    maxAllowedDepth: 5  // 建议最大目录深度
   }
 }; 

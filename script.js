@@ -9,34 +9,34 @@ const scanner = createScanner({
       baseDir: path.join(__dirname, 'resources/siam-admin-front'),
       codeDir: 'src',
       buildDir: '',
-      aliasMap: {
-        '@': 'src'
-      }
+      aliasConfig: {}
     },
     {
       appName: 'sop-portal-front',
       baseDir: path.join(__dirname, 'resources/sop-portal-front'),
       codeDir: 'src',
       buildDir: 'dist',
-      aliasMap: {}
+      aliasConfig: {}
     },
     {
       appName: 'sop-platform-front',
       baseDir: path.join(__dirname, 'resources/sop-platform-front'),
       codeDir: 'src',
       buildDir: '',
-      aliasMap: {}
+      aliasConfig: {
+        "@/*": ["./src/*"]
+      }
     },
   ],
   plugins: [
-    // {
-    //   name: 'eslint-check-plugin',
-    //   config: {}
-    // },
-    // {
-    //   name: 'stylelint-check-plugin',
-    //   config: {}
-    // },
+    {
+      name: 'eslint-check-plugin',
+      config: {}
+    },
+    {
+      name: 'stylelint-check-plugin',
+      config: {}
+    },
     // {
     //   name: 'count-check-plugin',
     //   config: {}
@@ -61,10 +61,10 @@ const scanner = createScanner({
     //   name: 'build-check-plugin',
     //   config: {}
     // },
-    {
-      name: 'redundancy-check-plugin',
-      config: {}
-    }
+    // {
+    //   name: 'redundancy-check-plugin',
+    //   config: {}
+    // }
   ]
 });
 
