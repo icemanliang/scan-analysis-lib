@@ -1,7 +1,4 @@
 module.exports = {
-  // 开发模式
-  devMode: false,
-
   // 文件配置
   files: [
     { pattern: 'src/**/*.less', syntax: 'postcss-less' },

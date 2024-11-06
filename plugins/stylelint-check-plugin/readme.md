@@ -6,9 +6,6 @@ stylelint 检查插件，用于检查项目中的 CSS/LESS/SCSS 文件是否符�
 
 ```javascript
 {
-  // 开发模式
-  devMode: false,
-
   // 文件配置
   files: [
     { pattern: 'src/**/*.less', syntax: 'postcss-less' },

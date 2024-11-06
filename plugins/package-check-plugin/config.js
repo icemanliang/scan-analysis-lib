@@ -1,6 +1,4 @@
 module.exports = {
-  // 开发模式
-  devMode: false,
   // 私有包前缀
   privatePackagePrefix: '@shein',
   // 风险阈值

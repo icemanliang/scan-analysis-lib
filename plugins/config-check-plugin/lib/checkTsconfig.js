@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const jsonc = require('jsonc-parser');
 
 module.exports = async function checkTsconfig(baseDir, config) {
   const filePath = path.join(baseDir, 'tsconfig.json');
@@ -47,14 +48,7 @@ module.exports = async function checkTsconfig(baseDir, config) {
 async function loadConfig(filePath) {
   const content = fs.readFileSync(filePath, 'utf8');
   try {
-    const normalizedContent = content
-      .replace(/\/\*[\s\S]*?\*\//g, '') // 移除多行注释
-      .replace(/\/\/.*/g, '') // 移除单行注释
-      .replace(/,(\s*[}\]])/g, '$1') // 移除尾随逗号
-      .replace(/'/g, '"') // 替换单引号为双引号
-      .replace(/([{,]\s*)(\w+)(\s*:)/g, '$1"$2"$3'); // 给属性名加上双引号
-    
-    return JSON.parse(normalizedContent);
+    return jsonc.parse(content);
   } catch (error) {
     throw new Error(`JSON 解析错误: ${error.message}`);
   }

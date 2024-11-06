@@ -3,32 +3,43 @@ const fs = require('fs');
 const glob = require('fast-glob');
 const simpleGit = require('simple-git');
 const defaultConfig = require('./config');
+const moment = require('moment');
 
 class GitCheckPlugin {
   constructor(config = {}) {
-    this.name = 'GitCheckPlugin';
-    this.config = {
+    this.name = 'GitCheckPlugin';                  // 插件名称
+    this.devMode = false;                           // 是否开启调试模式
+    this.config = {                                // 插件配置
       ...defaultConfig,
       ...config
     };
   }
 
+  // 开发模式调试日志
+  devLog(title, message) {
+    if(this.devMode) {
+      console.debug(moment().format('YYYY-MM-DD HH:mm:ss'), 'debug', `[${this.name}]`, title, message);
+    }
+  }
+
+  // 注册插件
   apply(scanner) {
     scanner.hooks.project.tapPromise(this.name, async (context) => {
       try {
-        context.logger.log('info', 'starting git checks...');
+        context.logger.log('info', 'start git check...');
+        const startTime = Date.now();
 
         const results = await this.runChecks(context.baseDir, context.codeDir);
-        context.scanResults.gitInfo = results;
-        
-        context.logger.log('info', 'git checks completed.');
+        context.scanResults.gitInfo = results;    
+        context.logger.log('info', `git check completed, time: ${Date.now() - startTime} ms`);
       } catch (error) {
         context.scanResults.gitInfo = null;
-        context.logger.log('error', `error in plugin ${this.name}: ${error.message}`);
+        context.logger.log('error', `error in plugin ${this.name}: ${error.stack}`);
       }
     });
   }
 
+  // 运行检查
   async runChecks(baseDir, codeDir) {
     const results = {
       fileStats: {},
@@ -71,9 +82,11 @@ class GitCheckPlugin {
     );
     results.directoryDepth = depthResults;
 
+    this.devLog('runChecks', results);
     return results;
   }
 
+  // 获取所有文件
   async getAllFiles(baseDir, codeDir) {
     const pattern = path.join(baseDir, codeDir, '**/*');
     return glob(pattern, {
@@ -82,6 +95,7 @@ class GitCheckPlugin {
     });
   }
 
+  // 获取所有目录
   async getAllDirectories(baseDir, codeDir) {
     const pattern = path.join(baseDir, codeDir, '**/*');
     return glob(pattern, {
@@ -90,6 +104,7 @@ class GitCheckPlugin {
     });
   }
 
+  // 分析文件
   analyzeFile(filePath, results) {
     const stats = fs.statSync(filePath);
     const ext = path.extname(filePath).toLowerCase();
@@ -100,8 +115,10 @@ class GitCheckPlugin {
     
     results.fileStats[ext].count++;
     results.fileStats[ext].totalSize += stats.size;
+    this.devLog('fileStats', results.fileStats);
   }
 
+  // 检查文件命名
   checkNaming(filePath, baseDir, results) {
     const fileName = path.basename(filePath, path.extname(filePath));
     if (!this.isValidNaming(fileName)) {
@@ -110,21 +127,26 @@ class GitCheckPlugin {
         results.namingIssues.files.push(relativePath);
       }
     }
+    this.devLog('fileNaming', results.namingIssues);
   }
 
+  // 检查目录命名
   checkDirectoryNaming(dirPath, baseDir, results) {
     const dirName = path.basename(dirPath);
     if (!this.isValidNaming(dirName)) {
       const relativePath = path.relative(baseDir, dirPath);
       results.namingIssues.directories.push(relativePath);
     }
+    this.devLog('directoryNaming', results.namingIssues);
   }
 
+  // 检查命名是否符合规范
   isValidNaming(str) {
     const { patterns } = this.config.naming;
     return patterns.lowercase.test(str) || patterns.kebabCase.test(str);
   }
 
+  // 检查提交信息
   async checkCommitMessages(baseDir) {
     const git = simpleGit(baseDir);
     const commits = await git.log({ maxCount: this.config.git.recentCommitsCount });
@@ -137,6 +159,7 @@ class GitCheckPlugin {
       }));
   }
 
+  // 检查 husky 配置
   async checkHusky(baseDir) {
     const result = { exists: false, isValid: false, errors: [] };
     const huskyDir = path.join(baseDir, '.husky');
@@ -155,9 +178,11 @@ class GitCheckPlugin {
     });
     
     result.isValid = result.errors.length === 0;
+    this.devLog('huskyCheck', result);
     return result;
   }
 
+  // 检查 gitignore 配置
   async checkGitignore(baseDir) {
     const result = { exists: false, isValid: false, errors: [] };
     const gitignorePath = path.join(baseDir, '.gitignore');
@@ -187,12 +212,12 @@ class GitCheckPlugin {
     } catch (error) {
       result.errors.push(error.message);
     }
-
+    this.devLog('gitignoreCheck', result);
     return result;
   }
 
+  // 分析目录深度
   async analyzeDirectoryDepth(baseDir, codeDir, threshold) {
-    // console.log('threshold:', threshold);
     const basePath = path.join(baseDir, codeDir);
     const result = {
       maxDepth: 0,
@@ -226,7 +251,7 @@ class GitCheckPlugin {
 
     // 按深度降序排序
     result.deepDirectories.sort((a, b) => b.depth - a.depth);
-
+    this.devLog('directoryDepth', result.deepDirectories);
     return result;
   }
 }

@@ -6,17 +6,26 @@ const autoprefixer = require('autoprefixer');
 const browserslist = require('browserslist');
 const defaultConfig = require('./config');
 const HtmlChecker = require('./lib/html-checker');
+const moment = require('moment');
 
 class BuildCheckPlugin {
   constructor(config = {}) {
-    this.name = 'BuildCheckPlugin';
-    this.config = {
+    this.name = 'BuildCheckPlugin';            // 插件名称
+    this.devMode = false;                       // 是否开启调试模式
+    this.config = {                            // 插件配置
       ...defaultConfig,
       ...config
     };
-    this.htmlChecker = new HtmlChecker(this.config.html);
   }
 
+  // 开发模式调试日志
+  devLog(title, message) {
+    if(this.devMode) {
+      console.debug(moment().format('YYYY-MM-DD HH:mm:ss'), 'debug', `[${this.name}]`, title, message);
+    }
+  }
+
+  // 注册插件
   apply(scanner) {
     scanner.hooks.build.tapPromise(this.name, async (context) => {
       if(context.buildDir === '') {
@@ -25,7 +34,8 @@ class BuildCheckPlugin {
         return;
       }
       try {
-        context.logger.log('info', 'starting build check...');
+        context.logger.log('info', 'start build check...'); 
+        const startTime = Date.now()
         
         const buildPath = path.join(context.baseDir, context.buildDir);
         const stats = this.analyzeDirectory(buildPath);
@@ -40,14 +50,15 @@ class BuildCheckPlugin {
           cssChecks
         };
 
-        context.logger.log('info', 'build check completed.');
+        context.logger.log('info', `build check completed, time: ${Date.now() - startTime} ms`);
       } catch (error) {
         context.scanResults.buildInfo = null;
-        context.logger.log('error', `error in plugin ${this.name}: ${error.message}`);
+        context.logger.log('error', `error in plugin ${this.name}: ${error.stack}`);
       }
     });
   }
 
+  // 分析目录
   analyzeDirectory(dir) {
     const stats = {
       html: { count: 0, size: 0 },
@@ -89,10 +100,13 @@ class BuildCheckPlugin {
     };
 
     walkDir(dir);
+    this.devLog('stats', stats);
     return stats;
   }
 
+  // 检查 HTML 文件
   async checkHtmlFiles(buildPath) {
+    const htmlChecker = new HtmlChecker(this.config.html);   // HTML 检查器
     const htmlFiles = fs.readdirSync(buildPath).filter(file => path.extname(file).toLowerCase() === '.html');
     const results = [];
 
@@ -102,7 +116,7 @@ class BuildCheckPlugin {
         const content = fs.readFileSync(filePath, 'utf-8');
         const dom = htmlparser2.parseDocument(content);
         
-        const checkResult = this.htmlChecker.check(dom);
+        const checkResult = htmlChecker.check(dom);
         results.push({
           file,
           ...checkResult
@@ -116,9 +130,11 @@ class BuildCheckPlugin {
       }
     }
 
+    this.devLog('htmlChecks', results);
     return results;
   }
 
+  // 检查 JS 文件
   async checkJsFiles(buildPath) {
     const jsFiles = fs.readdirSync(buildPath).filter(file => path.extname(file).toLowerCase() === '.js');
     const results = [];
@@ -135,14 +151,17 @@ class BuildCheckPlugin {
       results.push(result);
     }
 
+    this.devLog('jsChecks', results);
     return results;
   }
 
+  // 检查 JS 文件是否压缩
   isMinified(content) {
     const { minLines, maxLineLength } = this.config.minification;
     return content.split('\n').length < minLines || content.length / content.split('\n').length > maxLineLength;
   }
 
+  // 检查 CSS 文件
   async checkCssFiles(baseDir, buildPath) {
     const cssFiles = fs.readdirSync(buildPath).filter(file => path.extname(file).toLowerCase() === '.css');
     const results = [];
@@ -158,19 +177,23 @@ class BuildCheckPlugin {
       results.push(result);
     }
 
+    this.devLog('cssChecks', results);
     return results;
   }
 
+  // 检查 CSS 文件前缀
   async checkCssPrefixes(baseDir, css) {
     const browsers = browserslist.loadConfig({ path: baseDir });
     const prefixer = postcss([autoprefixer({ overrideBrowserslist: browsers })]);
     const result = await prefixer.process(css, { from: undefined });
+    
     return {
       missingPrefixes: result.warnings().length > 0,
       warnings: result.warnings().map(warning => warning.text)
     };
   }
 
+  // 检查 CSS 文件是否压缩
   isCssMinified(content) {
     const { minLines, maxLineLength } = this.config.minification;
     return content.split('\n').length < minLines || content.length / content.split('\n').length > maxLineLength;

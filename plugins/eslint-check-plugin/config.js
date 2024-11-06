@@ -1,7 +1,4 @@
 module.exports = {
-  // 开发模式
-  devMode: false,
-
   // 解析器配置
   parserOptions: {
     ecmaVersion: "latest",

@@ -4,11 +4,13 @@ const path = require('path');
 const glob = require('fast-glob');
 const fs = require('fs');
 const defaultConfig = require('./config');
+const moment = require('moment');
 
 class RedundancyCheckPlugin {
   constructor(config = {}) {
-    this.name = 'RedundancyCheckPlugin';
-    this.config = {
+    this.name = 'RedundancyCheckPlugin';       // 插件名称  
+    this.devMode = false;                      // 是否开启调试模式
+    this.config = {                            // 插件配置
       detection: {
         ...defaultConfig.detection,
         ...config.detection
@@ -20,10 +22,19 @@ class RedundancyCheckPlugin {
     };
   }
 
+  // 开发模式调试日志
+  devLog(title, message) {
+    if(this.devMode) {
+      console.debug(moment().format('YYYY-MM-DD HH:mm:ss'), 'debug', `[${this.name}]`, title, message);
+    }
+  } 
+
+  // 注册插件
   apply(scanner) {
     scanner.hooks.code.tapPromise(this.name, async (context) => {
       try {
-        context.logger.log('info', 'start code redundancy check...');
+        context.logger.log('info', 'start redundancy check...');
+        const startTime = Date.now();
 
         const srcPath = path.resolve(context.baseDir, context.codeDir);
         const files = glob.sync(this.config.files.patterns, {
@@ -60,8 +71,8 @@ class RedundancyCheckPlugin {
             clones.push(...result);
           }
         }
+        this.devLog('clones', clones);
 
-        context.logger.log('info', 'code redundancy check completed');
         context.scanResults.redundancyInfo = {
           statistic: {
             total: files.length,
@@ -86,10 +97,10 @@ class RedundancyCheckPlugin {
             }))
           }
         };
+        context.logger.log('info', `redundancy check completed, time: ${Date.now() - startTime} ms`);
       } catch(error) {
         context.scanResults.redundancyInfo = null;
-        context.logger.log('error', `plugin ${this.name} execution error: ${error.message}`);
-        context.logger.log('debug', `error details: ${error.stack}`);
+        context.logger.log('error', `error in plugin ${this.name}: ${error.stack}`);
       }
     });
   }

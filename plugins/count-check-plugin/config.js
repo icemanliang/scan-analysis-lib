@@ -1,7 +1,4 @@
 module.exports = {
-  // 开发模式
-  devMode: false,
-
   // 忽略的文件和目录
   ignore: {
     patterns: [

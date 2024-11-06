@@ -2,18 +2,26 @@ const stylelint = require('stylelint');
 const glob = require('fast-glob');
 const defaultConfig = require('./config');
 const { formatResults, analyzeResults } = require('./util');
+const moment = require('moment');
 
 class StylelintCheckPlugin {
   constructor(config = {}) {
-    this.name = 'StylelintCheckPlugin';
-    
-    // 合并配置
-    this.config = {
+    this.name = 'StylelintCheckPlugin';       // 插件名称
+    this.devMode = false;                      // 是否开启调试模式
+    this.config = {                           // 插件配置
       ...defaultConfig,
       ...config
     };
   }
 
+  // 开发模式调试日志
+  devLog(title, message) {
+    if(this.devMode) {
+      console.debug(moment().format('YYYY-MM-DD HH:mm:ss'), 'debug', `[${this.name}]`, title, message);
+    }
+  }
+
+  // 检查文件
   async checkFiles(pattern, config, context) {
     const files = await glob(pattern, {
       cwd: context.baseDir,
@@ -31,10 +39,12 @@ class StylelintCheckPlugin {
     });
   }
 
+  // 注册插件
   async apply(scanner) {
     scanner.hooks.code.tapPromise(this.name, async (context) => {
       try {
-        context.logger.log('info', 'Starting Stylelint check...');
+        context.logger.log('info', 'start stylelint check...');
+        const startTime = Date.now();
         
         const baseConfig = {
           rules: this.config.stylelint.rules
@@ -52,6 +62,7 @@ class StylelintCheckPlugin {
 
           allResults = allResults.concat(result.results);
         }
+        this.devLog('allResults', allResults);
 
         // 格式化结果
         const formattedResults = formatResults(allResults, context.baseDir);
@@ -63,14 +74,12 @@ class StylelintCheckPlugin {
         };
 
         const { errorCount, errorRuleCount } = context.scanResults.stylelintInfo;
-        context.logger.log('info', 
-          `Stylelint check completed. Found ${errorCount} errors from ${errorRuleCount} rules.`
-        );
+        context.logger.log('info', `total found ${errorCount} errors from ${errorRuleCount} rules.`);
+        context.logger.log('info', `stylelint check completed, time: ${Date.now() - startTime} ms`);
 
       } catch(error) {
         context.scanResults.stylelintInfo = null;
-        context.logger.log('error', `Error in plugin ${this.name}: ${error.message}`);
-        console.error('Full error:', error);
+        context.logger.log('error', `error in plugin ${this.name}: ${error.stack}`);
       }
     });
   }

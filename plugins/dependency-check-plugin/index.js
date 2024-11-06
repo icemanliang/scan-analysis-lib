@@ -3,20 +3,32 @@ const path = require('path');
 const fs = require('fs');
 const jsonc = require('jsonc-parser');
 const defaultConfig = require('./config');
+const moment = require('moment');
 
 class DependencyCheckPlugin {
   constructor(config = {}) {
-    this.name = 'DependencyCheckPlugin';
-    this.config = {
+    this.name = 'DependencyCheckPlugin';     // 插件名称  
+    this.devMode = false;                    // 是否开启调试模式
+    this.config = {                          // 插件配置
       ...defaultConfig,
       ...config
     };
   }
 
+  // 开发模式调试日志
+  devLog(title, message) {
+    if(this.devMode) {
+      console.debug(moment().format('YYYY-MM-DD HH:mm:ss'), 'debug', `[${this.name}]`, title, message);
+    }
+  }
+
+  // 注册插件
   apply(scanner) {
     scanner.hooks.dependency.tapPromise(this.name, async (context) => {
       try {
-        context.logger.log('info', 'Starting dependency check...');
+        context.logger.log('info', 'start dependency check...');
+        const startTime = Date.now();
+
         const compilerOptions = this.getCompilerOptions(context.baseDir);
         if(context.aliasConfig && Object.keys(context.aliasConfig).length > 0) {
           // console.log('context.aliasConfig', context.aliasConfig);
@@ -37,7 +49,7 @@ class DependencyCheckPlugin {
         
         project.getSourceFiles().forEach(sourceFile => {
           const filePath = sourceFile.getFilePath();
-          // console.log('filePath', filePath);
+          this.devLog('filePath', filePath);
           
           sourceFile.getImportDeclarations().forEach(importDecl => {
             const moduleSpecifier = importDecl.getModuleSpecifierValue();
@@ -79,14 +91,16 @@ class DependencyCheckPlugin {
         });
 
         context.scanResults.dependencyInfo = { internal: internalDependencies, external: externalDependencies };
-        context.logger.log('info', `UsageCheck completed. Analyzed ${Object.keys(internalDependencies).length} internal files and ${Object.keys(externalDependencies).length} external packages.`);
+        context.logger.log('info', `analyzed ${Object.keys(internalDependencies).length} internal files and ${Object.keys(externalDependencies).length} external packages.`);
+        context.logger.log('info', `dependency check completed, time: ${Date.now() - startTime} ms`);
       } catch (error) {
         context.scanResults.dependencyInfo = null;
-        context.logger.log('error', `Error in plugin ${this.name}: ${error.message}`);
+        context.logger.log('error', `error in plugin ${this.name}: ${error.stack}`);
       }
     });
   }
 
+  // 获取 tsconfig.json 配置
   getCompilerOptions(baseDir) {
     const tsConfigPath = path.join(baseDir, 'tsconfig.json');
     if (fs.existsSync(tsConfigPath)) {
@@ -94,16 +108,17 @@ class DependencyCheckPlugin {
         const tsConfigContent = fs.readFileSync(tsConfigPath, 'utf8');
         const tsConfig = jsonc.parse(tsConfigContent);
         if (tsConfig?.compilerOptions) {
-          // console.log('tsConfig.compilerOptions', tsConfig.compilerOptions);
+          this.devLog('getCompilerOptions', tsConfig.compilerOptions);
           return tsConfig.compilerOptions;
         }
       } catch (error) {
-        console.error('Error reading tsconfig.json:', error);
+        console.error('error reading tsconfig.json:', error);
       }
     }
     return this.config.compilerOptions;
   }
 
+  // 解析导入路径
   resolveImportPath(baseDir, currentFilePath, moduleSpecifier, aliasConfig) {
     // 处理相对路径导入
     if (moduleSpecifier.startsWith('.')) {
@@ -124,6 +139,7 @@ class DependencyCheckPlugin {
     // 处理 node_modules 导入
     const nodeModulesPath = path.join(baseDir, 'node_modules', moduleSpecifier);
     if (fs.existsSync(nodeModulesPath)) {
+      this.devLog('resolveImportPath', nodeModulesPath);
       return nodeModulesPath;
     }
 
@@ -131,17 +147,20 @@ class DependencyCheckPlugin {
     return null;
   }
 
+  // 解析文件路径
   resolveFileWithExtensions(filePath) {
     const extensions = ['.ts', '.tsx', '.js', '.jsx', ''];
     for (const ext of extensions) {
       const fullPath = filePath + ext;
       if (fs.existsSync(fullPath)) {
+        this.devLog('resolveFileWithExtensions', fullPath);
         return fullPath;
       }
     }
     return null;
   }
 
+  // 从路径中获取包名
   getPackageNameFromPath(fullPath) {
     const parts = fullPath.split('node_modules/');
     const packagePath = parts[parts.length - 1];

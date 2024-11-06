@@ -3,19 +3,24 @@ const path = require('path');
 const fs = require('fs');
 const glob = require('fast-glob');
 const defaultConfig = require('./config');
+const { formatResults } = require('./util');
+const moment = require('moment');
 
 class CountCheckPlugin {
   constructor(config = {}) {
-    this.name = 'CountCheckPlugin';
-    
-    // 合并配置
-    this.config = {
+    this.name = 'CountCheckPlugin';                  // 插件名称 
+    this.devMode = false;                            // 是否开启调试模式  
+    this.config = {                                  // 插件配置
       ...defaultConfig,
       ...config
     };
+  }
 
-    // 基础目录
-    this.baseDir = '';
+  // 开发模式调试日志
+  devLog(title, message) {
+    if(this.devMode) {
+      console.debug(moment().format('YYYY-MM-DD HH:mm:ss'), 'debug', `[${this.name}]`, title, message);
+    }
   }
 
   // 初始化结果对象
@@ -34,15 +39,15 @@ class CountCheckPlugin {
     };
   }
 
+  // 注册插件
   apply(scanner) {
     scanner.hooks.code.tapPromise(this.name, async (context) => {
       try {
         context.logger.log('info', 'start count check...');
-        this.baseDir = context.baseDir;
+        const startTime = Date.now();
 
         // 初始化结果对象
         const results = this.initResults();
-
         const files = await this.getAllFiles(context.baseDir, context.codeDir);
         files.forEach(file => {
           const sourceFile = this.createSourceFile(file);
@@ -51,30 +56,27 @@ class CountCheckPlugin {
           }
         });
 
-        context.scanResults.countInfo = this.formatResults(results);
-        
-        this.logResults(context, results);
+        context.scanResults.countInfo = formatResults(results, context.baseDir);      
+        context.logger.log('info', 
+          `total ${results.generatorFunctions.length} generator functions, ` +
+          `${results.classComponents.length} class components, ` +
+          `${Object.keys(results.domApis).length} dom apis, and ` +
+          `${Object.keys(results.bomApis).length} bom apis.`
+        );
+        context.logger.log('info',
+          `total ${results.functionStats.total} functions, ` +
+          `including ${results.functionStats.hooks} hook functions. ` +
+          `${results.functionStats.missingTypes} functions missing type declarations.`
+        );
+        context.logger.log('info', `count check completed, time: ${Date.now() - startTime} ms`);
       } catch (error) {
         context.scanResults.countInfo = null;
-        context.logger.log('error', `error in plugin ${this.name}: ${error.message}`);
+        context.logger.log('error', `error in plugin ${this.name}: ${error.stack}`);
       }
     });
   }
 
-  logResults(context, results) {
-    context.logger.log('info', 
-      `total ${results.generatorFunctions.length} generator functions, ` +
-      `${results.classComponents.length} class components, ` +
-      `${Object.keys(results.domApis).length} dom apis, and ` +
-      `${Object.keys(results.bomApis).length} bom apis.`
-    );
-    context.logger.log('info',
-      `total ${results.functionStats.total} functions, ` +
-      `including ${results.functionStats.hooks} hook functions. ` +
-      `${results.functionStats.missingTypes} functions missing type declarations.`
-    );
-  }
-
+  // 获取所有文件
   async getAllFiles(baseDir, codeDir) {
     const patterns = path.join(baseDir, codeDir, '**/*.{js,jsx,ts,tsx}');
     return glob(patterns, {
@@ -83,11 +85,13 @@ class CountCheckPlugin {
     });
   }
 
+  // 分析文件
   analyzeFile(sourceFile, results) {
     const isTypeScriptFile = sourceFile.fileName.endsWith('.ts') || sourceFile.fileName.endsWith('.tsx');
     ts.forEachChild(sourceFile, node => this.visitNode(node, sourceFile, isTypeScriptFile, results));
   }
 
+  // 访问节点
   visitNode(node, sourceFile, isTypeScriptFile, results) {
     if (ts.isFunctionDeclaration(node)) {
       if (isTypeScriptFile) {
@@ -105,6 +109,7 @@ class CountCheckPlugin {
     ts.forEachChild(node, child => this.visitNode(child, sourceFile, isTypeScriptFile, results));
   }
 
+  // 检查函数声明
   checkFunctionDeclaration(node, sourceFile, results) {
     const name = node.name ? node.name.getText() : 'anonymous';
     
@@ -132,6 +137,7 @@ class CountCheckPlugin {
     }
   }
 
+  // 检查类组件
   isClassComponent(node) {
     let extendsReactComponent = false;
     let hasRequiredMethods = false;
@@ -157,10 +163,11 @@ class CountCheckPlugin {
         );
       });
     }
-
+    this.devLog('isClassComponent', { extendsReactComponent, hasRequiredMethods });
     return extendsReactComponent && hasRequiredMethods;
   }
 
+  // 检查浏览器 API
   checkBrowserAPI(node, sourceFile, results) {
     const objectName = node.expression.getText();
     const propertyName = node.name.getText();
@@ -174,44 +181,13 @@ class CountCheckPlugin {
     }
   }
 
-  formatFilePath(fullPath) {
-    return path.relative(this.baseDir, fullPath);
-  }
-
-  formatResults(results) {
-    const formatItem = item => ({
-      ...item,
-      file: this.formatFilePath(item.file)
-    });
-
-    const formatArray = array => array.map(formatItem);
-
-    const formatApiMap = apiMap => {
-      const newMap = {};
-      Object.entries(apiMap).forEach(([key, value]) => {
-        newMap[key] = formatArray(value);
-      });
-      return newMap;
-    };
-
-    return {
-      ...results,
-      generatorFunctions: formatArray(results.generatorFunctions),
-      classComponents: formatArray(results.classComponents),
-      domApis: formatApiMap(results.domApis),
-      bomApis: formatApiMap(results.bomApis),
-      functionStats: {
-        ...results.functionStats,
-        functionsWithMissingTypes: formatArray(results.functionStats.functionsWithMissingTypes)
-      }
-    };
-  }
-
+  // 创建源文件
   createSourceFile(filePath) {
     const content = fs.readFileSync(filePath, 'utf-8');
     return ts.createSourceFile(filePath, content, ts.ScriptTarget.Latest, true);
   }
 
+  // 添加 API 使用
   addApiUsage(apis, apiName, filePath, line) {
     if (!apis[apiName]) {
       apis[apiName] = [];
@@ -219,20 +195,24 @@ class CountCheckPlugin {
     apis[apiName].push({ file: filePath, line });
   }
 
+  // 记录生成器函数
   recordGeneratorFunction(node, sourceFile, results) {
     results.generatorFunctions.push({
       file: sourceFile.fileName,
       name: node.name ? node.name.text : 'anonymous',
       line: sourceFile.getLineAndCharacterOfPosition(node.getStart()).line + 1
     });
+    this.devLog('recordGeneratorFunction', results.generatorFunctions);
   }
 
+  // 记录类组件
   recordClassComponent(node, sourceFile, results) {
     results.classComponents.push({
       file: sourceFile.fileName,
       name: node.name ? node.name.text : 'anonymous',
       line: sourceFile.getLineAndCharacterOfPosition(node.getStart()).line + 1
     });
+    this.devLog('recordClassComponent', results.classComponents);
   }
 }
 

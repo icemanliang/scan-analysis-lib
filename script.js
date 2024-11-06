@@ -29,14 +29,14 @@ const scanner = createScanner({
     },
   ],
   plugins: [
-    {
-      name: 'eslint-check-plugin',
-      config: {}
-    },
-    {
-      name: 'stylelint-check-plugin',
-      config: {}
-    },
+    // {
+    //   name: 'eslint-check-plugin',
+    //   config: {}
+    // },
+    // {
+    //   name: 'stylelint-check-plugin',
+    //   config: {}
+    // },
     // {
     //   name: 'count-check-plugin',
     //   config: {}
@@ -49,10 +49,10 @@ const scanner = createScanner({
     //   name: 'config-check-plugin',
     //   config: {}
     // },
-    // {
-    //   name: 'package-check-plugin',
-    //   config: {}
-    // },
+    {
+      name: 'package-check-plugin',
+      config: {}
+    },
     // {
     //   name: 'dependency-check-plugin',
     //   config: {}

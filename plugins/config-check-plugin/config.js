@@ -1,7 +1,4 @@
 module.exports = {
-  // 开发模式
-  devMode: false,
-
   // 检查项开关配置
   checks: {
     commitlint: true,

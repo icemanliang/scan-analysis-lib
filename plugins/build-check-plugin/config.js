@@ -1,7 +1,4 @@
 module.exports = {
-  // 开发模式
-  devMode: false,
-  
   // 文件类型分类配置
   fileTypes: {
     media: [

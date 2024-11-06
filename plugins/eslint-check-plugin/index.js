@@ -4,30 +4,37 @@ const fs = require('fs');
 const glob = require('fast-glob');
 const defaultConfig = require('./config');
 const { minifyResults, analyzeResults } = require('./util');
+const moment = require('moment');
 
 class EslintCheckPlugin {
   constructor(config = {}) {
-    this.name = 'EslintCheckPlugin';
-    
-    // 合并用户配置
-    this.config = {
+    this.name = 'EslintCheckPlugin';           // 插件名称
+    this.devMode = false;                      // 是否开启调试模式
+    this.config = {                            // 插件配置
       ...defaultConfig,
       ...config
     };
-
-    // 基础目录
-    this.baseDir = '';
   }
 
+  // 开发模式调试日志
+  devLog(title, message) {
+    if(this.devMode) {
+      console.debug(moment().format('YYYY-MM-DD HH:mm:ss'), 'debug', `[${this.name}]`, title, message);
+    }
+  }
+
+  // 检查 tsconfig.json 配置
   hasTsConfig(rootDir) {
     return fs.existsSync(path.join(rootDir, 'tsconfig.json'));
   }
 
+  // 检查 vue 文件
   hasVueFiles(rootDir, codeDir) {
     const vueFiles = glob.sync('**/*.vue', { cwd: path.join(rootDir, codeDir) });
     return vueFiles.length > 0;
   }
 
+  // 获取忽略配置
   getIgnoreConfig(context) {
     const ignorePatterns = [...this.config.ignore.patterns];
     const ignorePath = path.join(context.baseDir, this.config.ignore.file);
@@ -43,6 +50,7 @@ class EslintCheckPlugin {
     return ignorePatterns;
   }
 
+  // 获取 eslint 配置
   getEslintConfig(useTypeScript, hasVue, context) {
     const ignorePatterns = this.getIgnoreConfig(context);
 
@@ -78,17 +86,19 @@ class EslintCheckPlugin {
     };
   }
 
+  // 注册插件
   async apply(scanner) {
     scanner.hooks.code.tapPromise(this.name, async (context) => {
       try {
-        context.logger.log('info', 'Starting ESLint check...');
-
-        this.baseDir = context.baseDir;
+        context.logger.log('info', 'start eslint check...');
+        const startTime = Date.now();
 
         const useTypeScript = this.hasTsConfig(context.baseDir);
         const hasVue = this.hasVueFiles(context.baseDir, context.codeDir);
 
         const eslintConfig = this.getEslintConfig(useTypeScript, hasVue, context);
+        this.devLog('eslintConfig', eslintConfig);
+
         const eslint = new ESLint({
           ...eslintConfig,
           cwd: context.baseDir,
@@ -98,16 +108,16 @@ class EslintCheckPlugin {
         const filesToLint = path.join(context.baseDir, context.codeDir, '**/*.{js,jsx,ts,tsx,vue}');
         const results = await eslint.lintFiles([filesToLint]);
         
-        if (this.config.devMode) {
+        if (this.devMode) {
           const formatter = await eslint.loadFormatter('stylish');
           const resultText = formatter.format(results);
-          console.log(resultText);
+          this.devLog('resultText', resultText);
         }
 
         const errorCount = results.reduce((sum, result) => sum + result.errorCount, 0);
         const warningCount = results.reduce((sum, result) => sum + result.warningCount, 0);
 
-        const fileList = minifyResults(results, this.baseDir);
+        const fileList = minifyResults(results, context.baseDir);
         const ruleList = analyzeResults(fileList);
 
         context.scanResults.eslintInfo = {
@@ -117,11 +127,11 @@ class EslintCheckPlugin {
           ruleList
         };
 
-        context.logger.log('info', `ESLint check completed. Found ${errorCount} errors and ${warningCount} warnings.`);
+        context.logger.log('info', `total found ${errorCount} errors and ${warningCount} warnings.`);
+        context.logger.log('info', `eslint check completed, time: ${Date.now() - startTime} ms`);
       } catch(error) {
         context.scanResults.eslintInfo = null;
-        context.logger.log('error', `Error in plugin ${this.name}: ${error.message}`);
-        console.error('Full error:', error);
+        context.logger.log('error', `error in plugin ${this.name}: ${error.stack}`);
       }
     });
   }

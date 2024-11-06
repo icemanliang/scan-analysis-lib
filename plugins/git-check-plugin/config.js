@@ -1,7 +1,4 @@
 module.exports = {
-  // 开发模式
-  devMode: false,
-
   // 命名规范配置
   naming: {
     // 文件和目录命名规则（正则表达式）
