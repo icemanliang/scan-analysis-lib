@@ -1,0 +1,7 @@
+.git
+.gitignore
+node_modules
+site
+.DS_Store
+resources
+scan-results

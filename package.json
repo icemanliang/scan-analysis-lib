@@ -18,6 +18,9 @@
     "multi-process"
   ],
   "author": "icemanliang",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.com/"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/icemanliang/scan-analysis-lib.git"
