@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "description": "a tool to scan and analyze the code of the projects",
   "main": "index.js",
+  "module": "index.js",
   "scripts": {
     "test": "node ./test.js"
   },
