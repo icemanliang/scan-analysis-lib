@@ -1,15 +1,27 @@
 {
   "name": "scan-analysis-lib",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "a tool to scan and analyze the code of the projects",
   "main": "index.js",
   "scripts": {
-    "scan": "node ./script.js"
+    "test": "node ./test.js"
+  },
+  "bin": {
+    "scan": "./bin/index.js"
   },
   "packageManager": "pnpm@9.6.0",
-  "keywords": [],
+  "keywords": [
+    "scan",
+    "analysis",
+    "ast",
+    "multi-process"
+  ],
   "author": "icemanliang",
-  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/icemanliang/scan-analysis-lib.git"
+  },
+  "license": "MIT",
   "dependencies": {
     "@babel/eslint-parser": "^7.25.9",
     "@babel/parser": "^7.25.8",
@@ -33,10 +45,8 @@
     "jsonc-parser": "^3.3.1",
     "moment": "^2.30.1",
     "postcss": "^8.4.47",
-    "postcss-html": "^1.7.0",
     "postcss-less": "^6.0.0",
     "postcss-scss": "^4.0.9",
-    "semver": "^7.6.3",
     "simple-git": "^3.27.0",
     "stylelint": "14",
     "tapable": "^2.2.1",

@@ -42,6 +42,7 @@ class GitCheckPlugin {
   // 运行检查
   async runChecks(baseDir, codeDir) {
     const results = {
+      commitId: '',
       fileStats: {},
       namingIssues: {
         directories: [],
@@ -55,6 +56,9 @@ class GitCheckPlugin {
         deepDirectories: []
       }
     };
+    // 获取最新commitId
+    const git = simpleGit(baseDir);
+    results.commitId = await git.revparse(['--short', 'HEAD']);
 
     // 文件分析
     const files = await this.getAllFiles(baseDir, codeDir);

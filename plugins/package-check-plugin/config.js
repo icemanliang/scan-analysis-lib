@@ -1,6 +1,6 @@
 module.exports = {
   // 私有包前缀
-  privatePackagePrefix: '@shein',
+  privatePackagePrefix: '@iceman',
   // 风险阈值
   riskThreshold: {
     lastUpdateMonths: 12,

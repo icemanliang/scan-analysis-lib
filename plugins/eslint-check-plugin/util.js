@@ -75,8 +75,6 @@ exports.analyzeResults = (minResults) => {
 
   // 返回简化的分析结果
   return {
-    errorRuleCount: errorRuleList.length,
-    warningRuleCount: warningRuleList.length,
     errorRuleList,
     warningRuleList
   };

@@ -124,6 +124,8 @@ class EslintCheckPlugin {
           errorCount,
           warningCount,
           fileList,
+          errorRuleCount: ruleList.errorRuleList.length,
+          warningRuleCount: ruleList.warningRuleList.length,
           ruleList
         };
 
