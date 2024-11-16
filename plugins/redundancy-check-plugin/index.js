@@ -5,6 +5,7 @@ const glob = require('fast-glob');
 const fs = require('fs');
 const defaultConfig = require('./config');
 const moment = require('moment');
+const { groupClonesByContent } = require('./util');
 
 class RedundancyCheckPlugin {
   constructor(config = {}) {
@@ -15,6 +16,7 @@ class RedundancyCheckPlugin {
         ...defaultConfig.detection,
         ...config.detection
       },
+      maxFilesLimit: config.maxFilesLimit || defaultConfig.maxFilesLimit,
       files: {
         ...defaultConfig.files,
         ...config.files
@@ -42,6 +44,14 @@ class RedundancyCheckPlugin {
           ignore: this.config.files.ignore,
           absolute: true
         });
+        this.devLog('files count', files.length);
+
+        // 检查文件数量是否超过限制，如果超过则跳过检测，返回null，防止内存溢出
+        if(files.length > this.config.maxFilesLimit) {
+          context.logger.log('warn', `max files limit: ${this.config.maxFilesLimit}, actual: ${files.length}`);
+          context.scanResults.redundancyInfo = null;
+          return;
+        }
 
         context.logger.log('info', `check directory: ${srcPath}`);
 
@@ -73,28 +83,18 @@ class RedundancyCheckPlugin {
         }
         this.devLog('clones', clones);
 
+        // 对克隆进行分组和处理
+        const groupedClones = groupClonesByContent(clones, context.baseDir);
+        
         context.scanResults.redundancyInfo = {
           statistic: {
             total: files.length,
-            duplicates: clones.length,
+            duplicates: groupedClones.length,
             files: new Set(clones.flatMap(c => [
               c.duplicationA.sourceId, 
               c.duplicationB.sourceId
             ])).size,
-            clones: clones.map(clone => ({
-              firstFile: {
-                name: path.relative(context.baseDir, clone.duplicationA.sourceId),
-                startLine: clone.duplicationA.start.line,
-                endLine: clone.duplicationA.end.line
-              },
-              secondFile: {
-                name: path.relative(context.baseDir, clone.duplicationB.sourceId),
-                startLine: clone.duplicationB.start.line,
-                endLine: clone.duplicationB.end.line
-              },
-              lines: clone.duplicationA.end.line - clone.duplicationA.start.line,
-              tokens: clone.duplicationA.range.length
-            }))
+            clones: groupedClones
           }
         };
         context.logger.log('info', `redundancy check completed, time: ${Date.now() - startTime} ms`);
@@ -104,6 +104,7 @@ class RedundancyCheckPlugin {
       }
     });
   }
+
 }
 
 module.exports = RedundancyCheckPlugin;

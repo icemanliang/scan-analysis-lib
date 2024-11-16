@@ -11,7 +11,7 @@ exports.minifyResults = (results, baseDir) => {
     .map(result => {
       const filePath = path.relative(baseDir, result.filePath);
       const messages = result.messages.map(msg => ({
-        ruleId: msg.ruleId,
+        rule: msg.ruleId,
         severity: msg.severity,
         message: msg.message,
         line: msg.line
@@ -40,19 +40,19 @@ exports.analyzeResults = (minResults) => {
   // 遍历结果，按规则分组统计
   minResults.forEach(result => {
     result.messages.forEach(msg => {
-      if (!msg.ruleId) return;
+      if (!msg.rule) return;
 
       const rules = msg.severity === 2 ? errorRules : warningRules;
       
-      if (!rules[msg.ruleId]) {
-        rules[msg.ruleId] = {
+      if (!rules[msg.rule]) {
+        rules[msg.rule] = {
           count: 0,
           locations: []
         };
       }
 
-      rules[msg.ruleId].count++;
-      rules[msg.ruleId].locations.push({
+      rules[msg.rule].count++;
+      rules[msg.rule].locations.push({
         file: result.filePath,
         line: msg.line,
         message: msg.message
@@ -63,8 +63,8 @@ exports.analyzeResults = (minResults) => {
   // 转换规则对象为排序数组
   const sortRules = rules => 
     Object.entries(rules)
-      .map(([ruleId, data]) => ({
-        ruleId,
+      .map(([rule, data]) => ({
+        rule,
         ...data
       }))
       .sort((a, b) => b.count - a.count);

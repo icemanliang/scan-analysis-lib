@@ -1,15 +1,19 @@
 module.exports = {
   // 私有包前缀
-  privatePackagePrefix: '@iceman',
+  privatePackagePrefix: ['@iceman', '@frontend'],
   // 风险阈值
   riskThreshold: {
-    lastUpdateMonths: 12,
+    // 是否进行检查
+    isCheck: true,
+    // 包信息API
+    packageInfoApi: 'https://registry.npmjs.org/',
+    // 下载信息API
+    downloadInfoApi: 'https://api.npmjs.org/downloads/point/last-month/',
+    // 超时时间
+    apiTimeout: 5000,
+    lastUpdateMonths: 36,
     monthlyDownloads: 1000
   },
-  // 包信息API
-  packageInfoApi: 'https://registry.npmjs.org/',
-  // 下载信息API
-  downloadInfoApi: 'https://api.npmjs.org/downloads/point/last-month/',
   // 许可证
   licenses: {
     safe: [

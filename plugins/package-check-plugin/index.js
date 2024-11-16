@@ -159,13 +159,16 @@ class PackageCheckPlugin {
   // 识别私有包
   identifyPrivatePackages(dependencies) {
     return Object.keys(dependencies).filter(name => 
-      name.startsWith(this.config.privatePackagePrefix)
+      this.config.privatePackagePrefix.some(prefix => name.startsWith(prefix))
     );
   }
 
   // 识别风险包
   async identifyRiskPackages(dependencies, privatePackages) {
     const riskPackages = [];
+    if(!this.config.riskThreshold.isCheck){
+      return riskPackages;
+    }
     for (const [name, info] of Object.entries(dependencies)) {
       if (privatePackages.includes(name)) continue;
 
@@ -218,7 +221,9 @@ class PackageCheckPlugin {
   // 获取 npm 包信息
   async fetchNpmPackageInfo(packageName) {
     try {
-      const response = await axios.get(`${this.config.packageInfoApi}${packageName}`, { timeout: 5000 });
+      const apiUrl = this.config.riskThreshold.packageInfoApi;
+      const timeout = this.config.riskThreshold.apiTimeout;
+      const response = await axios.get(`${apiUrl}${packageName}`, { timeout: timeout });
 
       this.devLog('fetchNpmPackageInfo', response.data);
       return response.data;
@@ -242,7 +247,9 @@ class PackageCheckPlugin {
   // 获取月下载量
   async getMonthlyDownloads(packageName) {
     try {
-      const response = await axios.get(`${this.config.downloadInfoApi}${packageName}`, { timeout: 5000 });
+      const apiUrl = this.config.riskThreshold.downloadInfoApi;
+      const timeout = this.config.riskThreshold.apiTimeout;
+      const response = await axios.get(`${apiUrl}${packageName}`, { timeout: timeout });
       
       this.devLog('getMonthlyDownloads', response.data.downloads);
       return response.data.downloads;

@@ -5,6 +5,8 @@ module.exports = {
     minTokens: 50,     // 最小重复token数
     mode: 'mild'       // 检测模式：strict/mild/weak
   },
+  // 最大检测文件数, 防止内存溢出
+  maxFilesLimit: 10000,
 
   // 文件匹配配置
   files: {

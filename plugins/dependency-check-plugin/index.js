@@ -4,6 +4,7 @@ const fs = require('fs');
 const jsonc = require('jsonc-parser');
 const defaultConfig = require('./config');
 const moment = require('moment');
+const { transformDetailedImports } = require('./util');
 
 class DependencyCheckPlugin {
   constructor(config = {}) {
@@ -65,18 +66,15 @@ class DependencyCheckPlugin {
                 externalDependencies[packageName].count += 1;
                 externalDependencies[packageName].dependents.push(path.relative(context.baseDir, filePath));
 
-                // 如果是需要详细导入信息的包，收集导入的具体内容
-                if (this.config.detailedImportPackages.includes(packageName)) {
-                  const importedNames = importDecl.getNamedImports().map(named => named.getName());
-                  const defaultImport = importDecl.getDefaultImport()?.getText();
-                  if (defaultImport) importedNames.unshift(defaultImport);
+                const importedNames = importDecl.getNamedImports().map(named => named.getName());
+                const defaultImport = importDecl.getDefaultImport()?.getText();
+                if (defaultImport) importedNames.unshift(defaultImport);
 
-                  const formattedFilePath = path.relative(context.baseDir, filePath);
-                  if (!externalDependencies[packageName].detailedImports[formattedFilePath]) {
-                    externalDependencies[packageName].detailedImports[formattedFilePath] = [];
-                  }
-                  externalDependencies[packageName].detailedImports[formattedFilePath].push(...importedNames);
+                const formattedFilePath = path.relative(context.baseDir, filePath);
+                if (!externalDependencies[packageName].detailedImports[formattedFilePath]) {
+                  externalDependencies[packageName].detailedImports[formattedFilePath] = [];
                 }
+                externalDependencies[packageName].detailedImports[formattedFilePath].push(...importedNames);
               } else {
                 // 内部依赖
                 const formattedImportedFilePath = path.relative(context.baseDir, importedFilePath);
@@ -88,6 +86,12 @@ class DependencyCheckPlugin {
               }
             }
           });
+        });
+
+        // 在输出结果之前转换数据结构
+        Object.keys(externalDependencies).forEach(packageName => {
+          externalDependencies[packageName].detailedImports = 
+            transformDetailedImports(externalDependencies[packageName].detailedImports);
         });
 
         context.scanResults.dependencyInfo = { internal: internalDependencies, external: externalDependencies };

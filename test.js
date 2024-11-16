@@ -6,22 +6,22 @@ const config = {
   resultDir: 'scan-results',
   sources: [
     {
-      appName: 'admin-front',
-      baseDir: path.join(__dirname, 'resources/admin-front'),
+      appName: 'admin',
+      baseDir: path.join(__dirname, 'resources/admin'),
       codeDir: 'src',
       buildDir: '',
       aliasConfig: {}
     },
     {
-      appName: 'portal-front',
-      baseDir: path.join(__dirname, 'resources/portal-front'),
+      appName: 'portal',
+      baseDir: path.join(__dirname, 'resources/portal'),
       codeDir: 'src',
       buildDir: 'dist',
       aliasConfig: {}
     },
     {
-      appName: 'platform-front',
-      baseDir: path.join(__dirname, 'resources/platform-front'),
+      appName: 'platform',
+      baseDir: path.join(__dirname, 'resources/platform'),
       codeDir: 'src',
       buildDir: '',
       aliasConfig: {
@@ -56,7 +56,12 @@ const config = {
     },
     {
       name: 'package-check-plugin',
-      config: {}
+      config: {
+        privatePackagePrefix: ['@shein'],
+        riskThreshold: {
+          isCheck: false
+        }
+      }
     },
     {
       name: 'dependency-check-plugin',

@@ -73,8 +73,8 @@ exports.analyzeResults = (results) => {
 
   // 转换规则对象为排序数组
   const ruleList = Object.entries(rules)
-    .map(([ruleId, data]) => ({
-      ruleId,
+    .map(([rule, data]) => ({
+      rule,
       ...data
     }))
     .sort((a, b) => b.count - a.count);

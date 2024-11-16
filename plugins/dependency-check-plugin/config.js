@@ -7,6 +7,5 @@ module.exports = {
     paths: {
       "@src/*": ["./src/*"]
     }
-  },
-  detailedImportPackages: ['react', 'lodash'], // 需要详细导入信息的包
+  }
 }
