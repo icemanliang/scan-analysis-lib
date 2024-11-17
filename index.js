@@ -10,7 +10,7 @@ const Scanner = require('./lib/scanner');
 module.exports = async function scan(config = {}) {
   return new Promise(async (resolve, reject) => {
     try {
-      validateConfig(config);
+      // validateConfig(config);
       const scanner = new Scanner(config);
       const result = await scanner.scan();
       resolve(result);

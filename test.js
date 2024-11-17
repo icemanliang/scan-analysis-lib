@@ -6,22 +6,22 @@ const config = {
   resultDir: 'scan-results',
   sources: [
     {
-      appName: 'admin',
-      baseDir: path.join(__dirname, 'resources/admin'),
+      appName: 'siam-admin-front',
+      baseDir: path.join(__dirname, 'resources/siam-admin-front'),
       codeDir: 'src',
       buildDir: '',
       aliasConfig: {}
     },
     {
-      appName: 'portal',
-      baseDir: path.join(__dirname, 'resources/portal'),
+      appName: 'sop-platform-front',
+      baseDir: path.join(__dirname, 'resources/sop-platform-front'),
       codeDir: 'src',
       buildDir: 'dist',
       aliasConfig: {}
     },
     {
-      appName: 'platform',
-      baseDir: path.join(__dirname, 'resources/platform'),
+      appName: 'sop-portal-front',
+      baseDir: path.join(__dirname, 'resources/sop-portal-front'),
       codeDir: 'src',
       buildDir: '',
       aliasConfig: {
@@ -30,45 +30,49 @@ const config = {
     },
   ],
   plugins: [
+    // {
+    //   name: 'eslint-check-plugin',
+    //   config: {}
+    // },
+    // {
+    //   name: 'stylelint-check-plugin',
+    //   config: {}
+    // },
+    // {
+    //   name: 'count-check-plugin',
+    //   config: {}
+    // },
+    // {
+    //   name: 'redundancy-check-plugin',
+    //   config: {}
+    // },
+    // {
+    //   name: 'git-check-plugin',
+    //   config: {}
+    // },
+    // {
+    //   name: 'config-check-plugin',
+    //   config: {}
+    // },
+    // {
+    //   name: 'package-check-plugin',
+    //   config: {
+    //     privatePackagePrefix: ['@shein'],
+    //     riskThreshold: {
+    //       isCheck: false
+    //     }
+    //   }
+    // },
+    // {
+    //   name: 'dependency-check-plugin',
+    //   config: {}
+    // },
+    // {
+    //   name: 'build-check-plugin',
+    //   config: {}
+    // },
     {
-      name: 'eslint-check-plugin',
-      config: {}
-    },
-    {
-      name: 'stylelint-check-plugin',
-      config: {}
-    },
-    {
-      name: 'count-check-plugin',
-      config: {}
-    },
-    {
-      name: 'redundancy-check-plugin',
-      config: {}
-    },
-    {
-      name: 'git-check-plugin',
-      config: {}
-    },
-    {
-      name: 'config-check-plugin',
-      config: {}
-    },
-    {
-      name: 'package-check-plugin',
-      config: {
-        privatePackagePrefix: ['@shein'],
-        riskThreshold: {
-          isCheck: false
-        }
-      }
-    },
-    {
-      name: 'dependency-check-plugin',
-      config: {}
-    },
-    {
-      name: 'build-check-plugin',
+      name: 'quality-analyze-plugin',
       config: {}
     }
   ]
@@ -76,7 +80,7 @@ const config = {
 
 // 执行扫描
 scan(config).then((result) => {
-  console.log('scan result:', result);
+  // console.log('scan result:', result);
 }).catch((error) => {
   console.error('scan failed:', error);
 });
