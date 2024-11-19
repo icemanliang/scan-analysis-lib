@@ -1,7 +1,7 @@
 module.exports = {
   // 重复代码检测配置
   detection: {
-    minLines: 10,      // 最小重复行数
+    minLines: 15,      // 最小重复行数
     minTokens: 50,     // 最小重复token数
     mode: 'mild'       // 检测模式：strict/mild/weak
   },

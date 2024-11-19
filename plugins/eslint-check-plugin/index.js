@@ -113,7 +113,8 @@ class EslintCheckPlugin {
           const resultText = formatter.format(results);
           this.devLog('resultText', resultText);
         }
-
+        
+        const totalFilesCount = results.length;
         const errorCount = results.reduce((sum, result) => sum + result.errorCount, 0);
         const warningCount = results.reduce((sum, result) => sum + result.warningCount, 0);
 
@@ -121,6 +122,7 @@ class EslintCheckPlugin {
         const ruleList = analyzeResults(fileList);
 
         context.scanResults.eslintInfo = {
+          totalFilesCount,
           errorCount,
           warningCount,
           fileList,

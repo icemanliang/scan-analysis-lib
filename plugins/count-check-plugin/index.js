@@ -49,6 +49,7 @@ class CountCheckPlugin {
         // 初始化结果对象
         const results = this.initResults();
         const files = await this.getAllFiles(context.baseDir, context.codeDir);
+        const totalFilesCount = files.length;
         files.forEach(file => {
           const sourceFile = this.createSourceFile(file);
           if (sourceFile) {
@@ -56,7 +57,10 @@ class CountCheckPlugin {
           }
         });
 
-        context.scanResults.countInfo = formatResults(results, context.baseDir);      
+        context.scanResults.countInfo = {
+          ...formatResults(results, context.baseDir),
+          totalFilesCount
+        };      
         context.logger.log('info', 
           `total ${results.generatorFunctions.length} generator functions, ` +
           `${results.classComponents.length} class components, ` +

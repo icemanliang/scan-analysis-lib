@@ -5,7 +5,7 @@
   "main": "index.js",
   "module": "index.js",
   "scripts": {
-    "test": "node ./test.js"
+    "test": "node --max-old-space-size=8192 ./test.js"
   },
   "bin": {
     "scan": "./bin/index.js"

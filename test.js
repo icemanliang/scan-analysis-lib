@@ -6,22 +6,40 @@ const config = {
   resultDir: 'scan-results',
   sources: [
     {
-      appName: 'siam-admin-front',
-      baseDir: path.join(__dirname, 'resources/siam-admin-front'),
+      appName: 'project-a',
+      baseDir: path.join(__dirname, 'resources/project-a'),
       codeDir: 'src',
       buildDir: '',
       aliasConfig: {}
     },
     {
-      appName: 'sop-platform-front',
-      baseDir: path.join(__dirname, 'resources/sop-platform-front'),
+      appName: 'project-p',
+      baseDir: path.join(__dirname, 'resources/project-p'),
       codeDir: 'src',
-      buildDir: 'dist',
+      buildDir: '',
       aliasConfig: {}
     },
     {
-      appName: 'sop-portal-front',
-      baseDir: path.join(__dirname, 'resources/sop-portal-front'),
+      appName: 'project-s',
+      baseDir: path.join(__dirname, 'resources/project-s'),
+      codeDir: 'src',
+      buildDir: '',
+      aliasConfig: {
+        "@/*": ["./src/*"]
+      }
+    },
+    {
+      appName: 'project-w',
+      baseDir: path.join(__dirname, 'resources/project-w'),
+      codeDir: 'src',
+      buildDir: '',
+      aliasConfig: {
+        "@/*": ["./src/*"]
+      }
+    },
+    {
+      appName: 'project-g',
+      baseDir: path.join(__dirname, 'resources/project-g'),
       codeDir: 'src',
       buildDir: '',
       aliasConfig: {
@@ -30,49 +48,49 @@ const config = {
     },
   ],
   plugins: [
-    // {
-    //   name: 'eslint-check-plugin',
-    //   config: {}
-    // },
-    // {
-    //   name: 'stylelint-check-plugin',
-    //   config: {}
-    // },
-    // {
-    //   name: 'count-check-plugin',
-    //   config: {}
-    // },
-    // {
-    //   name: 'redundancy-check-plugin',
-    //   config: {}
-    // },
-    // {
-    //   name: 'git-check-plugin',
-    //   config: {}
-    // },
-    // {
-    //   name: 'config-check-plugin',
-    //   config: {}
-    // },
-    // {
-    //   name: 'package-check-plugin',
-    //   config: {
-    //     privatePackagePrefix: ['@shein'],
-    //     riskThreshold: {
-    //       isCheck: false
-    //     }
-    //   }
-    // },
-    // {
-    //   name: 'dependency-check-plugin',
-    //   config: {}
-    // },
-    // {
-    //   name: 'build-check-plugin',
-    //   config: {}
-    // },
     {
-      name: 'quality-analyze-plugin',
+      name: 'eslint-check-plugin',
+      config: {}
+    },
+    {
+      name: 'stylelint-check-plugin',
+      config: {}
+    },
+    {
+      name: 'count-check-plugin',
+      config: {}
+    },
+    {
+      name: 'redundancy-check-plugin',
+      config: {}
+    },
+    {
+      name: 'git-check-plugin',
+      config: {}
+    },
+    {
+      name: 'config-check-plugin',
+      config: {}
+    },
+    {
+      name: 'package-check-plugin',
+      config: {
+        privatePackagePrefix: ['@shein'],
+        riskThreshold: {
+          isCheck: false
+        }
+      }
+    },
+    {
+      name: 'dependency-check-plugin',
+      config: {}
+    },
+    {
+      name: 'build-check-plugin',
+      config: {}
+    },
+    {
+      name: 'quality-analysis-plugin',
       config: {}
     }
   ]

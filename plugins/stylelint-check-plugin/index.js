@@ -51,6 +51,7 @@ class StylelintCheckPlugin {
         };
 
         let allResults = [];
+        let totalFilesCount = 0;
 
         for (const { pattern, syntax } of this.config.files) {
           const config = syntax 
@@ -61,6 +62,7 @@ class StylelintCheckPlugin {
           if (!result) continue;
 
           allResults = allResults.concat(result.results);
+          totalFilesCount += result.results.length;
         }
         this.devLog('allResults', allResults);
 
@@ -69,6 +71,7 @@ class StylelintCheckPlugin {
         const analysis = analyzeResults(allResults);
 
         context.scanResults.stylelintInfo = {
+          totalFilesCount,
           ...formattedResults,
           ...analysis
         };
