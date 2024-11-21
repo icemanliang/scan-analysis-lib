@@ -15,15 +15,15 @@ exports.minifyResults = (results, baseDir) => {
         severity: msg.severity,
         message: msg.message,
         line: msg.line
-      }));
+      })).filter(msg => msg.rule !== null); // 过滤掉没有规则的错误
 
       return {
         filePath,
         messages,
-        errorCount: result.errorCount,
-        warningCount: result.warningCount
+        errorCount: messages.filter(msg => msg.severity === 2).length,  // 通过过滤后的 messages 计算错误数量
+        warningCount: messages.filter(msg => msg.severity === 1).length // 警告数量
       };
-    })
+    }).filter(result => result.errorCount > 0 || result.warningCount > 0) // 过滤掉没有错误和警告的文件
     .sort((a, b) => b.errorCount - a.errorCount);
 };
 

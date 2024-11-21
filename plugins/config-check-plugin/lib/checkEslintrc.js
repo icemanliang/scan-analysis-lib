@@ -84,11 +84,44 @@ module.exports = async function checkEslintrc(baseDir, config) {
 
 async function loadConfig(filePath) {
   if (filePath.endsWith('.js')) {
-    return require(filePath);
+    try {
+      // 首先尝试直接 require
+      const config = require(filePath);
+      return {
+        extends: config.extends || [],
+        parser: config.parser || ''
+      };
+    } catch (error) {
+      try {
+        // require 失败后，尝试用正则提取关键配置
+        const content = fs.readFileSync(filePath, 'utf8');
+        
+        // 提取 extends 数组
+        const extendsMatch = content.match(/extends:\s*\[([\s\S]*?)\]/);
+        const extends_ = extendsMatch ? 
+          extendsMatch[1].split(',')
+            .map(item => item.trim().replace(/['"]/g, ''))
+            .filter(Boolean) : 
+          [];
+        
+        // 提取 parser
+        const parserMatch = content.match(/parser:\s*['"]([^'"]*)['"]/);
+        const parser = parserMatch ? parserMatch[1] : '';
+
+        return {
+          extends: extends_,
+          parser
+        };
+      } catch (regexError) {
+        // 如果正则提取也失败，则抛出错误
+        throw new Error(`解析 JS 配置文件失败: ${error.message}`);
+      }
+    }
   }
+  
+  // JSON 文件处理保持不变
   const content = fs.readFileSync(filePath, 'utf8');
   try {
-    // 统一处理 JSON 格式
     return jsonc.parse(content);
   } catch (error) {
     throw new Error(`JSON 解析错误: ${error.message}`);

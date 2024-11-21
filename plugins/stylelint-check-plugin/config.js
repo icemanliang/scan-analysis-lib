@@ -15,14 +15,14 @@ module.exports = {
   // stylelint 配置
   stylelint: {
     rules: {
-      'max-nesting-depth': 5,
-      'selector-max-id': 0,
-      'selector-class-pattern': "^[a-z][a-zA-Z0-9]+$",
-      'declaration-block-single-line-max-declarations': 1,
-      'color-hex-case': "lower",
-      'color-no-invalid-hex': true,
-      'declaration-block-no-duplicate-properties': true,
-      'block-no-empty': true,
+      'max-nesting-depth': 5,   // 最大嵌套深度
+      'selector-max-id': 0,      // 最大id选择器数量
+      'selector-class-pattern': "^[a-z][a-zA-Z0-9]+$", // 类名必须小写
+      'declaration-block-single-line-max-declarations': 1, // 单行最大声明数量
+      'color-hex-case': "lower", // 十六进制颜色必须小写
+      'color-no-invalid-hex': true, // 十六进制颜色必须有效
+      'declaration-block-no-duplicate-properties': true, // 禁止重复属性
+      'block-no-empty': true, // 禁止空块
     }
   }
 }; 

@@ -12,7 +12,7 @@ module.exports = async function checkNodeVersion(baseDir, config) {
       
       // 检查版本格式是否正确
       if (!config.versionPattern.test(content)) {
-        result.errors.push('Node 版本格式不正确. 期望格式: v18.10.2 或 18.10.2');
+        result.errors.push('Node 版本格式不正确. 期望格式: 18.12.0');
       }
 
       // 检查版本号是否合法

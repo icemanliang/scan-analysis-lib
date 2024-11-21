@@ -32,25 +32,36 @@ module.exports = {
   basePlugins: ['react', 'jsdoc', 'unicorn'],
 
   // 基础扩展
-  baseExtends: ['eslint:recommended', 'plugin:jsdoc/recommended'],
+  baseExtends: ['eslint:recommended'],
 
   // 基础规则
   baseRules: {
-    // JSDoc 规则
+    // 函数必须包含注释说明
+    // 'require-any-comment': ['error'],
+    // 函数必须包含jsdoc注释说明
+    // 'jsdoc/require-jsdoc': 'error',
+    // 函数，方法，类设置jsdoc注释说明
     'jsdoc/require-jsdoc': ['error', {
-      'require': {
-        'FunctionDeclaration': true,
-        'MethodDefinition': true,
-        'ClassDeclaration': true,
-        'ArrowFunctionExpression': true,
-        'FunctionExpression': true
-      },
-      'checkConstructors': false,
-      'minLineCount': 2
+        'require': {
+          'FunctionDeclaration': true,
+          'MethodDefinition': true,
+          'ClassDeclaration': true,
+          'ArrowFunctionExpression': true,
+          'FunctionExpression': false
+        }
     }],
-    'jsdoc/require-description': 'off',
-    'jsdoc/require-returns': 'off',
-    'jsdoc/require-param-description': 'off',
+    'jsdoc/require-description': ['warn', {
+      'descriptionStyle': 'tag'
+    }],
+    'jsdoc/require-param-description': ['warn'],
+    'jsdoc/require-param': ['warn'],
+    'jsdoc/require-param-type': ['warn'],
+    'jsdoc/require-param-name': ['warn'],
+    'jsdoc/check-types': ['warn'],
+    'jsdoc/valid-types': ['warn'],
+    'jsdoc/require-returns': ['warn'],
+    'jsdoc/require-returns-check': ['warn'],
+    'jsdoc/require-returns-type': ['warn'],
 
     // React 规则
     'react/no-multi-comp': 'error',

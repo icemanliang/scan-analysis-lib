@@ -52,6 +52,8 @@ exports.extractQualityInfo = (results) => {
   if (results.countInfo) {
     qualityInfo.countInfo = {
       totalFilesCount: results.countInfo.totalFilesCount || 0,
+      domApiTotalCount: results.countInfo.domApiTotalCount || 0,
+      bomApiTotalCount: results.countInfo.bomApiTotalCount || 0,
       generatorFunctionsCount: results.countInfo.generatorFunctions?.length || 0,
       classComponentsCount: results.countInfo.classComponents?.length || 0,
       totalFunctionsCount: results.countInfo.functionStats?.total || 0,
@@ -106,6 +108,14 @@ exports.extractQualityInfo = (results) => {
       deepDirectoriesCount: results.gitInfo.directoryDepth?.deepDirectories?.length || 0,
       isCommitsInvaild: results.gitInfo.invalidCommits?.length > 0,
       isHuskyCheck: results.gitInfo.huskyCheck?.isValid || false
+    };
+  }
+
+  // 提取 packageInfo
+  if (results.packageInfo) {
+    qualityInfo.packageInfo = {
+      riskPackagesCount: results.packageInfo.riskPackages?.length || 0,
+      similarPackagesCount: results.packageInfo.similarPackages?.length || 0
     };
   }
 

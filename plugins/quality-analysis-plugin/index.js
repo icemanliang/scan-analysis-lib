@@ -5,7 +5,7 @@ const { calculateQualityScore } = require('./score');
 class QualityAnalysisPlugin { 
   constructor(config = {}) {
     this.name = 'QualityAnalysisPlugin';
-    this.devMode = true;
+    this.devMode = false;
     this.config = {
       ...defaultConfig,
       ...config

@@ -20,6 +20,10 @@ module.exports = async function checkPackageJson(baseDir, config, app = { isNpm:
       if (!config.namePattern.test(packageJson.name)) {
         result.errors.push(`name 字段 ${config.requiredFields.name}`);
       }
+      // 检查private字段,且必须为true
+      if (packageJson.private && packageJson.private !== true) {
+        result.errors.push('private 字段必须为 true');
+      }
 
       // 检查必需字段
       Object.entries(config.requiredFields).forEach(([field, message]) => {

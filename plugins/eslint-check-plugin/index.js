@@ -77,10 +77,11 @@ class EslintCheckPlugin {
           ...this.config.baseExtends,
           ...(useTypeScript ? ['plugin:@typescript-eslint/recommended'] : [])
         ],
+        noInlineConfig: true, // 禁用内联配置
         rules: {
           ...this.config.baseRules,
           ...(useTypeScript ? this.config.tsRules : { 'camelcase': ['error', { properties: 'never' }] }),
-          ...(hasVue ? this.config.vueRules : {})
+          ...(hasVue ? this.config.vueRules : {}),
         }
       }
     };
@@ -102,7 +103,8 @@ class EslintCheckPlugin {
         const eslint = new ESLint({
           ...eslintConfig,
           cwd: context.baseDir,
-          errorOnUnmatchedPattern: false
+          errorOnUnmatchedPattern: false,
+          rulePaths: [path.resolve(__dirname, 'rules')]  // 添加自定义插件规则
         });
         
         const filesToLint = path.join(context.baseDir, context.codeDir, '**/*.{js,jsx,ts,tsx,vue}');
@@ -113,13 +115,13 @@ class EslintCheckPlugin {
           const resultText = formatter.format(results);
           this.devLog('resultText', resultText);
         }
-        
-        const totalFilesCount = results.length;
-        const errorCount = results.reduce((sum, result) => sum + result.errorCount, 0);
-        const warningCount = results.reduce((sum, result) => sum + result.warningCount, 0);
 
         const fileList = minifyResults(results, context.baseDir);
         const ruleList = analyzeResults(fileList);
+
+        const errorCount = fileList.reduce((sum, result) => sum + result.errorCount, 0);
+        const warningCount = fileList.reduce((sum, result) => sum + result.warningCount, 0);
+        const totalFilesCount = results.length;
 
         context.scanResults.eslintInfo = {
           totalFilesCount,
@@ -130,7 +132,6 @@ class EslintCheckPlugin {
           warningRuleCount: ruleList.warningRuleList.length,
           ruleList
         };
-
         context.logger.log('info', `total found ${errorCount} errors and ${warningCount} warnings.`);
         context.logger.log('info', `eslint check completed, time: ${Date.now() - startTime} ms`);
       } catch(error) {
@@ -142,3 +143,4 @@ class EslintCheckPlugin {
 }
 
 module.exports = EslintCheckPlugin;
+

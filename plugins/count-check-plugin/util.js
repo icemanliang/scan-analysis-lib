@@ -22,12 +22,22 @@ exports.formatResults = (results, baseDir) => {
     return newMap;
   };
 
+  // 计算 DOM API 使用总数
+  const domApiTotalCount = Object.values(results.domApis)
+    .reduce((total, apis) => total + apis.length, 0);
+
+  // 计算 BOM API 使用总数
+  const bomApiTotalCount = Object.values(results.bomApis)
+    .reduce((total, apis) => total + apis.length, 0);
+
   return {
     ...results,
     generatorFunctions: formatArray(results.generatorFunctions),
     classComponents: formatArray(results.classComponents),
     domApis: formatApiMap(results.domApis),
     bomApis: formatApiMap(results.bomApis),
+    domApiTotalCount,
+    bomApiTotalCount,
     functionStats: {
       ...results.functionStats,
       functionsWithMissingTypes: formatArray(results.functionStats.functionsWithMissingTypes)

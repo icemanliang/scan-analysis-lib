@@ -6,40 +6,49 @@ const config = {
   resultDir: 'scan-results',
   sources: [
     {
-      appName: 'project-a',
-      baseDir: path.join(__dirname, 'resources/project-a'),
-      codeDir: 'src',
-      buildDir: '',
-      aliasConfig: {}
-    },
-    {
-      appName: 'project-p',
-      baseDir: path.join(__dirname, 'resources/project-p'),
-      codeDir: 'src',
-      buildDir: '',
-      aliasConfig: {}
-    },
-    {
-      appName: 'project-s',
-      baseDir: path.join(__dirname, 'resources/project-s'),
-      codeDir: 'src',
-      buildDir: '',
-      aliasConfig: {
-        "@/*": ["./src/*"]
-      }
-    },
-    {
       appName: 'project-w',
       baseDir: path.join(__dirname, 'resources/project-w'),
       codeDir: 'src',
       buildDir: '',
+      aliasConfig: {}
+    },
+    {
+      appName: 'project-g',
+      baseDir: path.join(__dirname, 'resources/project-g'),
+      codeDir: 'src',
+      buildDir: '',
+      aliasConfig: {}
+    },
+    {
+      appName: 'project-m',
+      baseDir: path.join(__dirname, 'resources/project-m'),
+      codeDir: 'src',
+      buildDir: '',
       aliasConfig: {
         "@/*": ["./src/*"]
       }
     },
     {
-      appName: 'project-g',
-      baseDir: path.join(__dirname, 'resources/project-g'),
+      appName: 'project-a',
+      baseDir: path.join(__dirname, 'resources/project-a'),
+      codeDir: 'src',
+      buildDir: '',
+      aliasConfig: {
+        "@/*": ["./src/*"]
+      }
+    },
+    {
+      appName: 'project-b',
+      baseDir: path.join(__dirname, 'resources/project-b'),
+      codeDir: 'src',
+      buildDir: '',
+      aliasConfig: {
+        "@/*": ["./src/*"]
+      }
+    },
+    {
+      appName: 'project-c',
+      baseDir: path.join(__dirname, 'resources/project-c'),
       codeDir: 'src',
       buildDir: '',
       aliasConfig: {
@@ -62,7 +71,9 @@ const config = {
     },
     {
       name: 'redundancy-check-plugin',
-      config: {}
+      config: {
+        maxFilesLimit: 15000
+      }
     },
     {
       name: 'git-check-plugin',
@@ -70,12 +81,16 @@ const config = {
     },
     {
       name: 'config-check-plugin',
-      config: {}
+      config: {
+        npmrc: {
+          registryDomain: 'https://npmjs.iceman.cn'
+        }
+      }
     },
     {
       name: 'package-check-plugin',
       config: {
-        privatePackagePrefix: ['@shein'],
+        privatePackagePrefix: ['@iceman'],
         riskThreshold: {
           isCheck: false
         }
