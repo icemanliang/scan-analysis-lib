@@ -2,3 +2,4 @@ resources
 node_modules
 scan-results
 temp
+.DS_Store

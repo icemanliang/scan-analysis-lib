@@ -10,8 +10,8 @@ module.exports = {
     nodeVersion: true,
     editorconfig: true,
     packageJson: true,
-    license: true,
-    ignoreFiles: true,
+    license: false,
+    ignoreFiles: false,
     browserslist: true,
   },
 
@@ -129,7 +129,8 @@ module.exports = {
     requiredFields: {
       name: '全小写字母，可使用中线连接多段全小写字母',
       description: '不能为空',
-      private: '必须为 true'
+      private: '必须为 true',
+      packageManager: '不能为空'
     },
     requiredScripts: ['lint', 'build', 'prepare'],
     packageManagerPattern: /^(npm|yarn|pnpm)@(\d+\.\d+\.\d+)$/,

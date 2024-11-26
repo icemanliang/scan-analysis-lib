@@ -65,8 +65,20 @@ module.exports = {
     },
     config: {
       errors: {
-        maxScore: 10, // 配置错误评分的最高分
+        maxScore: 8, // 配置错误评分的最高分
         maxErrors: 100 // 允许的最大配置错误数，超过后按比例扣分
+      },
+      readme: {
+        maxScore: 1, // readme 配置评分的最高分
+      },
+      packageJson: {
+        maxScore: 1, // packageJson 配置评分的最高分
+      },
+      npmrc: {
+        maxScore: 1, // npmrc 配置评分的最高分
+      },
+      nodeVersion: {
+        maxScore: 1, // node 版本配置评分的最高分
       },
       packageManager: {
         maxScore: 1, // 包管理器选择评分的最高分
@@ -79,6 +91,9 @@ module.exports = {
       },
       classComponents: {
         maxScore: 3 // 类组件使用评分的最高分
+      },
+      tFunctionCalls: {
+        maxScore: 3 // t 函数调用评分的最高分
       },
       missingTypes: {
         maxScore: 3 // 类型完整性评分的最高分
@@ -106,6 +121,9 @@ module.exports = {
       },
       risk: {
         maxScore: 1 // 风险依赖包评分的最高分
+      },
+      update: {
+        maxScore: 1 // 可更新依赖包评分的最高分
       }
     }
   }

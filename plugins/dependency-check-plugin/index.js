@@ -9,11 +9,15 @@ const { transformDetailedImports } = require('./util');
 class DependencyCheckPlugin {
   constructor(config = {}) {
     this.name = 'DependencyCheckPlugin';     // 插件名称  
-    this.devMode = false;                    // 是否开启调试模式
+    this.devMode = true;                    // 是否开启调试模式
     this.config = {                          // 插件配置
-      ...defaultConfig,
-      ...config
+      compilerOptions: {
+        ...defaultConfig.compilerOptions,
+        ...config.compilerOptions
+      },
+      ignoreMatch: config.ignoreMatch || defaultConfig.ignoreMatch
     };
+    this.packageJson = null;
   }
 
   // 开发模式调试日志
@@ -45,17 +49,21 @@ class DependencyCheckPlugin {
 
         project.addSourceFilesAtPaths(path.join(context.baseDir, context.codeDir, "**/*.{ts,tsx,js,jsx}"));
 
+        // 内部依赖和外部依赖
+        const internalTotalFilePaths = [];  // 参与分析的文件路径汇总
         const internalDependencies = {};
         const externalDependencies = {};
         
         project.getSourceFiles().forEach(sourceFile => {
           const filePath = sourceFile.getFilePath();
-          this.devLog('filePath', filePath);
+          internalTotalFilePaths.push(path.relative(context.baseDir, filePath));
+          // this.devLog('filePath', filePath);
           
           sourceFile.getImportDeclarations().forEach(importDecl => {
             const moduleSpecifier = importDecl.getModuleSpecifierValue();
             const importedFilePath = this.resolveImportPath(context.baseDir, filePath, moduleSpecifier, compilerOptions.paths);
 
+            // this.devLog('importedFilePath', importedFilePath);
             if (importedFilePath) {
               if (importedFilePath.includes('node_modules')) {
                 // 外部依赖
@@ -94,7 +102,12 @@ class DependencyCheckPlugin {
             transformDetailedImports(externalDependencies[packageName].detailedImports);
         });
 
-        context.scanResults.dependencyInfo = { internal: internalDependencies, external: externalDependencies };
+        // 计算依赖度为0的文件
+        const dependencyZeroFiles = internalTotalFilePaths
+          .filter(filePath => !internalDependencies[filePath])
+          .filter(filePath => !this.config.ignoreMatch.some(pattern => filePath.includes(pattern))); 
+
+        context.scanResults.dependencyInfo = { internal: internalDependencies, external: externalDependencies, dependencyZeroFiles };
         context.logger.log('info', `analyzed ${Object.keys(internalDependencies).length} internal files and ${Object.keys(externalDependencies).length} external packages.`);
         context.logger.log('info', `dependency check completed, time: ${Date.now() - startTime} ms`);
       } catch (error) {
@@ -112,7 +125,7 @@ class DependencyCheckPlugin {
         const tsConfigContent = fs.readFileSync(tsConfigPath, 'utf8');
         const tsConfig = jsonc.parse(tsConfigContent);
         if (tsConfig?.compilerOptions) {
-          this.devLog('getCompilerOptions', tsConfig.compilerOptions);
+          // this.devLog('getCompilerOptions', tsConfig.compilerOptions);
           return tsConfig.compilerOptions;
         }
       } catch (error) {
@@ -130,21 +143,34 @@ class DependencyCheckPlugin {
     }
 
     // 处理别名导入
-    for (const [alias, aliasPath] of Object.entries(aliasConfig)) {
-      const regexAlias = new RegExp(`^${alias.replace('*', '(.*)')}$`);
-      const match = moduleSpecifier.match(regexAlias);
-      if (match) {
-        const resolvedPath = path.join(baseDir, aliasPath[0].replace('*', match[1]));
-        const result = this.resolveFileWithExtensions(resolvedPath);
-        if (result) return result;
+    if (aliasConfig && Object.keys(aliasConfig).length > 0) {
+      for (const [alias, aliasPath] of Object.entries(aliasConfig)) {
+        const regexAlias = new RegExp(`^${alias.replace('*', '(.*)')}$`);
+        const match = moduleSpecifier.match(regexAlias);
+        if (match) {
+          const resolvedPath = path.join(baseDir, aliasPath[0].replace('*', match[1]));
+          const result = this.resolveFileWithExtensions(resolvedPath);
+          if (result) return result;
+        }
       }
     }
 
-    // 处理 node_modules 导入
-    const nodeModulesPath = path.join(baseDir, 'node_modules', moduleSpecifier);
-    if (fs.existsSync(nodeModulesPath)) {
-      this.devLog('resolveImportPath', nodeModulesPath);
-      return nodeModulesPath;
+    // 处理外部依赖导入
+    // this.devLog('resolveExternalImportPath', moduleSpecifier);
+    const packageJson = this.getPackageJson(baseDir);
+    if (packageJson) {
+      const dependencies = {
+        ...(packageJson.dependencies || {}),
+        ...(packageJson.devDependencies || {})
+      };
+      
+      // 获取模块的根包名（处理子模块导入的情况，如 'lodash/get'）
+      const rootPackageName = moduleSpecifier.split('/')[0];
+      
+      // 完整匹配或者匹配到按需导入的包，则返回完整路径
+      if (dependencies[moduleSpecifier] || dependencies[rootPackageName]) {
+        return path.join(baseDir, 'node_modules', moduleSpecifier);
+      }
     }
 
     // 如果无法解析，返回 null
@@ -157,7 +183,7 @@ class DependencyCheckPlugin {
     for (const ext of extensions) {
       const fullPath = filePath + ext;
       if (fs.existsSync(fullPath)) {
-        this.devLog('resolveFileWithExtensions', fullPath);
+        // this.devLog('resolveFileWithExtensions', fullPath);
         return fullPath;
       }
     }
@@ -169,6 +195,22 @@ class DependencyCheckPlugin {
     const parts = fullPath.split('node_modules/');
     const packagePath = parts[parts.length - 1];
     return packagePath.split('/')[0];
+  }
+
+  // 新增方法：获取 package.json 内容
+  getPackageJson(baseDir) {
+    if (this.packageJson) return this.packageJson;
+    
+    const packageJsonPath = path.join(baseDir, 'package.json');
+    if (fs.existsSync(packageJsonPath)) {
+      try {
+        this.packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+        return this.packageJson;
+      } catch (error) {
+        console.error('读取 package.json 失败:', error);
+      }
+    }
+    return null;
   }
 }
 

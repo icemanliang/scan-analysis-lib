@@ -4,8 +4,6 @@ module.exports = {
     jsx: 'react',
     resolveJsonModule: true,
     moduleResolution: 'node',
-    paths: {
-      "@src/*": ["./src/*"]
-    }
-  }
+  },
+  ignoreMatch: ['src/component/', '__tests__/']
 }

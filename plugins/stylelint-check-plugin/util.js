@@ -81,6 +81,6 @@ exports.analyzeResults = (results) => {
 
   return {
     errorRuleCount: ruleList.length,
-    ruleList
+    errorRuleList: ruleList
   };
 }; 

@@ -16,6 +16,13 @@ module.exports = async function checkPackageJson(baseDir, config, app = { isNpm:
     try {
       const packageJson = JSON.parse(fs.readFileSync(filePath, 'utf8'));
 
+      // 检查必需字段
+      Object.entries(config.requiredFields).forEach(([field, message]) => {
+        if (!packageJson[field] || packageJson[field].trim() === '') {
+          result.errors.push(`${field} 字段 ${message}`);
+        }
+      });
+
       // 检查包名格式
       if (!config.namePattern.test(packageJson.name)) {
         result.errors.push(`name 字段 ${config.requiredFields.name}`);
@@ -24,13 +31,6 @@ module.exports = async function checkPackageJson(baseDir, config, app = { isNpm:
       if (packageJson.private && packageJson.private !== true) {
         result.errors.push('private 字段必须为 true');
       }
-
-      // 检查必需字段
-      Object.entries(config.requiredFields).forEach(([field, message]) => {
-        if (!packageJson[field] || packageJson[field].trim() === '') {
-          result.errors.push(`${field} 字段 ${message}`);
-        }
-      });
 
       // 检查并解析 packageManager
       if (packageJson.packageManager && config.packageManagerPattern.test(packageJson.packageManager)) {

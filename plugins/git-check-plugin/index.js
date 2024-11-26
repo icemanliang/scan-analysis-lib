@@ -206,11 +206,13 @@ class GitCheckPlugin {
         return result;
       }
 
-      this.config.git.requiredIgnores.forEach(ignore => {
-        if (!lines.some(line => line.startsWith(ignore) || line === ignore)) {
-          result.errors.push(`缺少必要的忽略项: ${ignore}`);
-        }
-      });
+      const missingIgnores = this.config.git.requiredIgnores.filter(ignore => 
+        !lines.some(line => line.startsWith(ignore) || line === ignore)
+      );
+      
+      if (missingIgnores.length > 0) {
+        result.errors.push('缺少必要的忽略项');
+      }
 
       result.isValid = result.errors.length === 0;
     } catch (error) {

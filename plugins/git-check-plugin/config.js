@@ -33,18 +33,6 @@ module.exports = {
     requiredIgnores: [
       'logs',
       '*.log',
-      'npm-debug.log*',
-      'yarn-debug.log*',
-      'yarn-error.log*',
-      'lerna-debug.log*',
-      '.pnpm-debug.log*',
-      '.yarn/cache',
-      '.yarn/unplugged',
-      '.yarn/build-state.yml',
-      '.yarn/install-state.gz',
-      '.pnp.*',
-      '.temp*',
-      '.cache*',
       'node_modules',
       'dist/',
       '.DS_Store'

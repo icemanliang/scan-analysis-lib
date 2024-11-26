@@ -28,23 +28,15 @@ exports.extractQualityInfo = (results) => {
 
   // 提取 stylelintInfo
   if (results.stylelintInfo) {
-    // 收集所有规则
-    const ruleMap = new Map();
-    results.stylelintInfo.fileList?.forEach(file => {
-      file.messages?.forEach(msg => {
-        const ruleName = msg.rule;
-        if (ruleName) {
-          ruleMap.set(ruleName, (ruleMap.get(ruleName) || 0) + 1);
-        }
-      });
-    });
-
     qualityInfo.stylelintInfo = {
       totalFilesCount: results.stylelintInfo.totalFilesCount || 0,
       errorCount: results.stylelintInfo.errorCount || 0,
       fileListLength: results.stylelintInfo.fileList?.length || 0,
-      errorRuleCount: ruleMap.size,
-      ruleList: Array.from(ruleMap.entries()).map(([rule, count]) => ({ rule, count }))
+      errorRuleCount: results.stylelintInfo.errorRuleCount || 0,
+      errorRuleList: results.stylelintInfo.errorRuleList.map(rule => ({
+        rule: rule.rule,
+        count: rule.count
+      }))
     };
   }
 
@@ -57,7 +49,9 @@ exports.extractQualityInfo = (results) => {
       generatorFunctionsCount: results.countInfo.generatorFunctions?.length || 0,
       classComponentsCount: results.countInfo.classComponents?.length || 0,
       totalFunctionsCount: results.countInfo.functionStats?.total || 0,
-      missingTypesFunctionsCount: results.countInfo.functionStats?.missingTypes || 0
+      missingTypesFunctionsCount: results.countInfo.functionStats?.missingTypes || 0,
+      tFunctionTotalCount: results.countInfo.tFunctionCheck?.total || 0,
+      tFunctionIssuesCount: results.countInfo.tFunctionCheck?.issuesCount || 0,
     };
   }
 
@@ -76,11 +70,29 @@ exports.extractQualityInfo = (results) => {
   // 提取 configInfo
   if (results.configInfo) {
     qualityInfo.configInfo = {
+      // readme 配置是否有效
+      isReadmeValid: results.configInfo.readme?.exists && results.configInfo.readme?.isValid || false,
+      // packageJson 配置是否有效
+      isPackageJsonValid: results.configInfo.packageJson?.exists && results.configInfo.packageJson?.isValid || false,
+      // packageManager 配置
       packageManagerType: results.configInfo.packageJson?.packageManagerType || '',
+      // packageManagerVersion 配置
       packageManagerVersion: results.configInfo.packageJson?.packageManagerVersion || '',
+      // npmrc 配置
+      isNpmrcValid: results.configInfo.npmrc?.exists && results.configInfo.npmrc?.isValid || false,
+      // node版本配置是否有效
+      isNodeVersionValid: results.configInfo.nodeVersion?.exists && results.configInfo.nodeVersion?.isValid || false,
+      // node 版本
       nodeVersion: results.configInfo.nodeVersion?.version || '',
-      configErrorsCount: Object.values(results.configInfo)
-        .filter(config => config?.isValid === false).length
+      // 配置信息总数
+      configInfoCount: Object.keys(results.configInfo).length,
+      // 配置信息有效总数
+      configInfoValidCount: Object.values(results.configInfo)
+        .filter(config => config.exists && config?.isValid === true).length,
+      // 配置信息无效错误总数
+      configInfoInvalidErrorCount: Object.values(results.configInfo)
+        .filter(config => config.exists && config?.isValid === false)
+        .reduce((sum, config) => sum + (config?.errors?.length || 0), 0)
     };
   }
 
@@ -96,26 +108,31 @@ exports.extractQualityInfo = (results) => {
 
     const tsAndTsxFilesCount = (results.gitInfo.fileStats?.['.ts']?.count || 0) + 
                               (results.gitInfo.fileStats?.['.tsx']?.count || 0);
+    // 计算代码文件总大小
+    const totalSize = Object.values(results.gitInfo.fileStats || {})
+      .reduce((sum, stat) => sum + (stat.totalSize || 0), 0);
 
     qualityInfo.gitInfo = {
-      commitId: results.gitInfo.commitId || '',
-      jsAndJsxFilesCount: jsAndJsxFilesCount,
-      tsAndTsxFilesCount: tsAndTsxFilesCount,
-      totalFiles,  // 新增：文件总数
-      fileNamingIssuesCount: results.gitInfo.namingIssues?.files?.length || 0,
-      directoryNamingIssuesCount: results.gitInfo.namingIssues?.directories?.length || 0,
-      maxDirectoryDepth: results.gitInfo.directoryDepth?.maxDepth || 0,
-      deepDirectoriesCount: results.gitInfo.directoryDepth?.deepDirectories?.length || 0,
-      isCommitsInvaild: results.gitInfo.invalidCommits?.length > 0,
-      isHuskyCheck: results.gitInfo.huskyCheck?.isValid || false
+      commitId: results.gitInfo.commitId || '',  // 提交 id
+      jsAndJsxFilesCount: jsAndJsxFilesCount,  // js 和 jsx 文件总数
+      tsAndTsxFilesCount: tsAndTsxFilesCount,  // ts 和 tsx 文件总数
+      totalFiles,  // 文件总数
+      totalSize,   // 文件总大小
+      fileNamingIssuesCount: results.gitInfo.namingIssues?.files?.length || 0,  // 文件命名问题总数
+      directoryNamingIssuesCount: results.gitInfo.namingIssues?.directories?.length || 0,  // 目录命名问题总数
+      maxDirectoryDepth: results.gitInfo.directoryDepth?.maxDepth || 0,  // 最大目录深度
+      deepDirectoriesCount: results.gitInfo.directoryDepth?.deepDirectories?.length || 0,  // 深度目录总数
+      isCommitsInvaild: results.gitInfo.invalidCommits?.length > 0,  // 提交是否有效
+      isHuskyCheck: results.gitInfo.huskyCheck?.isValid || false  // husky 检查是否有效
     };
   }
 
   // 提取 packageInfo
   if (results.packageInfo) {
     qualityInfo.packageInfo = {
-      riskPackagesCount: results.packageInfo.riskPackages?.length || 0,
-      similarPackagesCount: results.packageInfo.similarPackages?.length || 0
+      riskPackagesCount: results.packageInfo.riskPackages?.length || 0,  // 风险包总数
+      similarPackagesCount: results.packageInfo.similarPackages?.length || 0,  // 相似包总数
+      updatePackagesCount: results.packageInfo.versionUpgrades?.length || 0  // 可更新包总数
     };
   }
 

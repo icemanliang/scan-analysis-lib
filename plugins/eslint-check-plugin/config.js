@@ -36,7 +36,7 @@ module.exports = {
 
   // 基础规则
   baseRules: {
-    // 函数必须包含注释说明
+    // 函数必须包含注释说明(自定义插件)
     // 'require-any-comment': ['error'],
     // 函数必须包含jsdoc注释说明
     // 'jsdoc/require-jsdoc': 'error',

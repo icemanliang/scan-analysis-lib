@@ -35,6 +35,12 @@ class CountCheckPlugin {
         hooks: 0,
         missingTypes: 0,
         functionsWithMissingTypes: []
+      },
+      tFunctionCheck: {
+        total: 0,
+        noParamCalls: [],
+        runParamCalls: [],
+        issues: []
       }
     };
   }
@@ -72,6 +78,7 @@ class CountCheckPlugin {
           `including ${results.functionStats.hooks} hook functions. ` +
           `${results.functionStats.missingTypes} functions missing type declarations.`
         );
+        context.logger.log('info', `t function check: ${results.tFunctionCheck.total} calls, ${results.tFunctionCheck.issues.length} issues.`);
         context.logger.log('info', `count check completed, time: ${Date.now() - startTime} ms`);
       } catch (error) {
         context.scanResults.countInfo = null;
@@ -97,7 +104,10 @@ class CountCheckPlugin {
 
   // 访问节点
   visitNode(node, sourceFile, isTypeScriptFile, results) {
-    if (ts.isFunctionDeclaration(node)) {
+    if (ts.isFunctionDeclaration(node) ||           
+        ts.isFunctionExpression(node) ||            
+        ts.isArrowFunction(node) ||                 
+        ts.isMethodDeclaration(node)) {             
       if (isTypeScriptFile) {
         this.checkFunctionDeclaration(node, sourceFile, results);
       }
@@ -108,6 +118,10 @@ class CountCheckPlugin {
       this.recordClassComponent(node, sourceFile, results);
     } else if (ts.isPropertyAccessExpression(node)) {
       this.checkBrowserAPI(node, sourceFile, results);
+    } else if (ts.isCallExpression(node) && 
+               ts.isIdentifier(node.expression) && 
+               node.expression.text === 't') {
+      this.checkTFunction(node, sourceFile, results);
     }
 
     ts.forEachChild(node, child => this.visitNode(child, sourceFile, isTypeScriptFile, results));
@@ -167,7 +181,7 @@ class CountCheckPlugin {
         );
       });
     }
-    this.devLog('isClassComponent', { extendsReactComponent, hasRequiredMethods });
+    // this.devLog('isClassComponent', { extendsReactComponent, hasRequiredMethods });
     return extendsReactComponent && hasRequiredMethods;
   }
 
@@ -206,7 +220,7 @@ class CountCheckPlugin {
       name: node.name ? node.name.text : 'anonymous',
       line: sourceFile.getLineAndCharacterOfPosition(node.getStart()).line + 1
     });
-    this.devLog('recordGeneratorFunction', results.generatorFunctions);
+    // this.devLog('recordGeneratorFunction', results.generatorFunctions);
   }
 
   // 记录类组件
@@ -216,7 +230,70 @@ class CountCheckPlugin {
       name: node.name ? node.name.text : 'anonymous',
       line: sourceFile.getLineAndCharacterOfPosition(node.getStart()).line + 1
     });
-    this.devLog('recordClassComponent', results.classComponents);
+    // this.devLog('recordClassComponent', results.classComponents);
+  }
+
+  // 检查 t 函数调用
+  checkTFunction(node, sourceFile, results) {
+    // 总调用次数
+    results.tFunctionCheck.total++;
+    const args = node.arguments;
+    // 无参数调用
+    if (!args.length || !args[0]) {
+      this.devLog('checkTFunction', 'no arguments');
+      results.tFunctionCheck.noParamCalls.push({
+        file: sourceFile.fileName,
+        line: sourceFile.getLineAndCharacterOfPosition(node.getStart()).line + 1,
+        reason: '无参数调用'
+      });
+      return;
+    }
+    // 动态参数调用
+    const firstArg = args[0];
+    if (!ts.isStringLiteral(firstArg)) {
+      this.devLog('checkTFunction', 'first argument is not a string literal');
+      results.tFunctionCheck.runParamCalls.push({
+        file: sourceFile.fileName,
+        line: sourceFile.getLineAndCharacterOfPosition(node.getStart()).line + 1,
+        reason: '动态参数调用'
+      });
+      return;
+    }
+
+    const text = firstArg.text;
+    const location = {
+      file: sourceFile.fileName,
+      line: sourceFile.getLineAndCharacterOfPosition(node.getStart()).line + 1,
+    };
+
+    // 检查字符串长度
+    if (text.length > 50) {
+      results.tFunctionCheck.issues.push({
+        ...location,
+        reason: '字符串长度不能超过50'
+      });
+      return;
+    }
+
+    // 单参数时必须是纯中文
+    if (args.length === 1) {
+      if (!/^[\u4e00-\u9fa5]+$/.test(text)) {
+        results.tFunctionCheck.issues.push({
+          ...location,
+          reason: '单参数调用只能包含中文'
+        });
+      }
+      return;
+    }
+
+    // 多参数时检查占位符数量
+    const placeholders = text.match(/\{(\d+)?\}/g) || [];
+    if (placeholders.length !== args.length - 1) {
+      results.tFunctionCheck.issues.push({
+        ...location,
+        reason: `占位符数量与参数数量不匹配`
+      });
+    }
   }
 }
 

@@ -145,6 +145,34 @@ const SCORE_DIMENSIONS = {
         (1 - count / scores.directory.deep.maxCount)).toFixed(2));
     }
   },
+
+  // readme 配置评分
+  // 计算逻辑：正确配置了 readme 得满分，否则得 0 分
+  readmeConfig: {
+    maxScore: scores.config.readme.maxScore,
+    calculate: (qualityInfo) => qualityInfo.configInfo?.isReadmeValid ? scores.config.readme.maxScore : 0
+  },
+
+  // packageJson 配置评分
+  // 计算逻辑：正确配置了 packageJson 得满分，否则得 0 分
+  packageJsonConfig: {
+    maxScore: scores.config.packageJson.maxScore,
+    calculate: (qualityInfo) => qualityInfo.configInfo?.isPackageJsonValid ? scores.config.packageJson.maxScore : 0
+  },
+
+  // npmrc 配置评分
+  // 计算逻辑：正确配置了 npmrc 得满分，否则得 0 分
+  npmrcConfig: {
+    maxScore: scores.config.npmrc.maxScore,
+    calculate: (qualityInfo) => qualityInfo.configInfo?.isNpmrcValid ? scores.config.npmrc.maxScore : 0
+  },
+
+  // node 版本配置评分
+  // 计算逻辑：正确配置了 node 版本信息得满分，否则得 0 分
+  nodeVersionConfig: {
+    maxScore: scores.config.nodeVersion.maxScore,
+    calculate: (qualityInfo) => qualityInfo.configInfo?.isNodeVersionValid ? scores.config.nodeVersion.maxScore : 0
+  },  
   
   // 配置错误评分
   // 计算逻辑：配置错误数量占阈值的比例越低得分越高
@@ -186,6 +214,17 @@ const SCORE_DIMENSIONS = {
       if (!qualityInfo.countInfo?.classComponentsCount) return scores.codeQuality.classComponents.maxScore;
       const ratio = qualityInfo.countInfo.classComponentsCount / qualityInfo.countInfo.totalFilesCount;
       return Number(Math.max(0, scores.codeQuality.classComponents.maxScore * (1 - ratio)).toFixed(2));
+    }
+  },
+
+  // t 函数调用评分
+  // 计算逻辑：t 函数调用异常总数占总调用次数的比例越低得分越高
+  tFunctionCalls: {
+    maxScore: scores.codeQuality.tFunctionCalls.maxScore,
+    calculate: (qualityInfo) => {
+      if (!qualityInfo.countInfo?.tFunctionTotalCount) return scores.codeQuality.tFunctionCalls.maxScore;
+      const ratio = qualityInfo.countInfo.tFunctionIssuesCount / qualityInfo.countInfo.tFunctionTotalCount;
+      return Number(Math.max(0, scores.codeQuality.tFunctionCalls.maxScore * (1 - ratio)).toFixed(2));
     }
   },
   
@@ -271,9 +310,16 @@ const SCORE_DIMENSIONS = {
 
   // 风险包评分
   // 计算逻辑：存在风险包得 0 分，否则得满分
-  npmPackages: {
+  riskPackages: {
     maxScore: scores.packages.risk.maxScore,
     calculate: (qualityInfo) => qualityInfo.packageInfo?.riskPackagesCount > 0 ? 0 : scores.packages.risk.maxScore
+  },
+
+  // 可更新包评分
+  // 计算逻辑：存在可更新包得 0 分，否则得满分
+  updatePackages: {
+    maxScore: scores.packages.update.maxScore,
+    calculate: (qualityInfo) => qualityInfo.packageInfo?.updatePackagesCount > 0 ? 0 : scores.packages.update.maxScore
   }
 };
 

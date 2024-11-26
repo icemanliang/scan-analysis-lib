@@ -1,6 +1,30 @@
 const path = require('path');
 
 /**
+ * 获取问题规则
+ * @param {Array} issues - 问题数组
+ * @returns {Object} 问题规则
+ */
+const getIssueRules = issues => {
+  // 使用对象来记录每种问题的数量
+  const ruleStats = {};
+
+  issues.forEach(issue => {
+    const reason = issue.reason;
+    if (!ruleStats[reason]) {
+      ruleStats[reason] = 1;
+    } else {
+      ruleStats[reason]++;
+    }
+  });
+
+  return Object.entries(ruleStats).map(([reason, count]) => ({
+    reason,
+    count
+  }));
+};
+
+/**
  * 格式化结果
  * @param {Object} results - 结果对象
  * @param {string} baseDir - 基础目录
@@ -41,6 +65,16 @@ exports.formatResults = (results, baseDir) => {
     functionStats: {
       ...results.functionStats,
       functionsWithMissingTypes: formatArray(results.functionStats.functionsWithMissingTypes)
+    },
+    tFunctionCheck: {
+      total: results.tFunctionCheck.total,
+      issues: formatArray(results.tFunctionCheck.issues),
+      issuesCount: results.tFunctionCheck.issues.length,
+      noParamCalls: formatArray(results.tFunctionCheck.noParamCalls),
+      runParamCalls: formatArray(results.tFunctionCheck.runParamCalls),
+      noParamCallsCount: results.tFunctionCheck.noParamCalls.length,
+      runParamCallsCount: results.tFunctionCheck.runParamCalls.length,
+      issueRules: getIssueRules(results.tFunctionCheck.issues)
     }
   };
 };

@@ -6,29 +6,6 @@ const config = {
   resultDir: 'scan-results',
   sources: [
     {
-      appName: 'project-w',
-      baseDir: path.join(__dirname, 'resources/project-w'),
-      codeDir: 'src',
-      buildDir: '',
-      aliasConfig: {}
-    },
-    {
-      appName: 'project-g',
-      baseDir: path.join(__dirname, 'resources/project-g'),
-      codeDir: 'src',
-      buildDir: '',
-      aliasConfig: {}
-    },
-    {
-      appName: 'project-m',
-      baseDir: path.join(__dirname, 'resources/project-m'),
-      codeDir: 'src',
-      buildDir: '',
-      aliasConfig: {
-        "@/*": ["./src/*"]
-      }
-    },
-    {
       appName: 'project-a',
       baseDir: path.join(__dirname, 'resources/project-a'),
       codeDir: 'src',
@@ -52,7 +29,7 @@ const config = {
       codeDir: 'src',
       buildDir: '',
       aliasConfig: {
-        "@/*": ["./src/*"]
+        "@src/*": ["./src/*"]
       }
     },
   ],
@@ -98,12 +75,14 @@ const config = {
     },
     {
       name: 'dependency-check-plugin',
-      config: {}
+      config: {
+        ignoreMatch: ['src/component/', '__tests__/']
+      }
     },
-    {
-      name: 'build-check-plugin',
-      config: {}
-    },
+    // {
+    //   name: 'build-check-plugin',
+    //   config: {}
+    // },
     {
       name: 'quality-analysis-plugin',
       config: {}
