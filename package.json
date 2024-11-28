@@ -1,9 +1,10 @@
 {
   "name": "scan-analysis-lib",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "a tool to scan and analyze the code of the projects",
   "main": "index.js",
   "module": "index.js",
+  "types": "types/index.d.ts",
   "scripts": {
     "test": "node --max-old-space-size=8192 ./test.js"
   },

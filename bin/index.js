@@ -2,7 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { scan } = require('../index');
+const scan = require('../index');
 
 function startScan() {
   // 检查配置文件是否存在
@@ -22,7 +22,7 @@ function startScan() {
 
   // 执行扫描
   scan(config).then(() => {
-    console.log('scan completed.');
+    console.log('\n========== scan completed. ==========\n');
   }).catch(() => {
     process.exit(1);
   });

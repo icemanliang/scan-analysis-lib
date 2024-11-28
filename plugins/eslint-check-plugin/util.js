@@ -18,7 +18,7 @@ exports.minifyResults = (results, baseDir) => {
       })).filter(msg => msg.rule !== null); // 过滤掉没有规则的错误
 
       return {
-        filePath,
+        file: filePath,
         messages,
         errorCount: messages.filter(msg => msg.severity === 2).length,  // 通过过滤后的 messages 计算错误数量
         warningCount: messages.filter(msg => msg.severity === 1).length // 警告数量
@@ -53,7 +53,7 @@ exports.analyzeResults = (minResults) => {
 
       rules[msg.rule].count++;
       rules[msg.rule].locations.push({
-        file: result.filePath,
+        file: result.file,
         line: msg.line,
         message: msg.message
       });

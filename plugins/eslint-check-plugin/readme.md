@@ -1,30 +1,16 @@
-# Eslint Check Plugin
+# ESLint 检查插件
 
-## 功能
+## 功能介绍
+代码扫描工具的 ESLint 检查插件，用于执行项目代码的 ESLint 规范检查，支持 JavaScript/TypeScript/Vue/React 等多种项目类型。
 
-- 检查代码中的Eslint错误
-- 检查代码中的Vue文件
-- 检查代码中的React文件
-- 分析Eslint错误，按规则分组并统计
-
-## 配置
-
-- devMode: 是否为开发模式，开发模式下会输出更多调试信息
-- parserOptions: 解析器配置
-- settings: 设置
-- env: 环境配置
-
-## 输出
-
-- 输出结果为JSON格式，包含以下字段：
-  - errorCount: 错误数量
-  - warningCount: 警告数量
-  - fileList: 文件列表，每个元素包含filePath和messages字段
-  - ruleList: 分析结果，包含以下字段：
-    - ErrorRuleCount: 错误规则数量
-    - WarningRuleCount: 警告规则数量
-    - ErrorRuleList: 错误规则列表
-    - WarningRuleList: 警告规则列表
+## 核心能力
+- 支持检查 JavaScript、TypeScript、Vue、React 等多种文件类型
+- 自动识别项目类型并应用对应的 ESLint 配置
+- 支持自定义 Parser 和解析配置
+- 支持文件命名规范检查
+- 提供代码复杂度检查(函数行数、文件行数等)
+- 强制要求函数注释(JSDoc)规范
+- 分析 ESLint 错误并按规则分组统计
 
 
 
