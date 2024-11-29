@@ -108,7 +108,7 @@ class CountCheckPlugin {
         ts.isFunctionExpression(node) ||            
         ts.isArrowFunction(node) ||                 
         ts.isMethodDeclaration(node)) {             
-      if (isTypeScriptFile) {
+      if (isTypeScriptFile && !ts.isArrowFunction(node)) { // 排除箭头函数
         this.checkFunctionDeclaration(node, sourceFile, results);
       }
       if (node.asteriskToken) {
@@ -141,7 +141,22 @@ class CountCheckPlugin {
 
     const line = sourceFile.getLineAndCharacterOfPosition(node.getStart()).line + 1;
     const hasValidParameterTypes = node.parameters.every(p => p.type && p.type.kind !== ts.SyntaxKind.AnyKeyword);
-    const hasValidReturnType = node.type && node.type.kind !== ts.SyntaxKind.AnyKeyword;
+    
+    // 修改返回类型检查逻辑
+    const hasValidReturnType = Boolean(
+      node.type && (
+        // 检查是否有显式的返回类型标注
+        node.type.kind !== ts.SyntaxKind.AnyKeyword
+        // 检查是否为 void 类型
+        // node.type.kind !== ts.SyntaxKind.VoidKeyword
+      )
+    );
+
+    // this.devLog('checkFunctionDeclaration', { 
+    //   name,
+    //   hasValidParameterTypes, 
+    //   hasValidReturnType,
+    // });
 
     if (!hasValidParameterTypes || !hasValidReturnType) {
       results.functionStats.missingTypes++;
@@ -240,7 +255,7 @@ class CountCheckPlugin {
     const args = node.arguments;
     // 无参数调用
     if (!args.length || !args[0]) {
-      this.devLog('checkTFunction', 'no arguments');
+      // this.devLog('checkTFunction', 'no arguments');
       results.tFunctionCheck.noParamCalls.push({
         file: sourceFile.fileName,
         line: sourceFile.getLineAndCharacterOfPosition(node.getStart()).line + 1,
@@ -251,7 +266,7 @@ class CountCheckPlugin {
     // 动态参数调用
     const firstArg = args[0];
     if (!ts.isStringLiteral(firstArg)) {
-      this.devLog('checkTFunction', 'first argument is not a string literal');
+      // this.devLog('checkTFunction', 'first argument is not a string literal');
       results.tFunctionCheck.runParamCalls.push({
         file: sourceFile.fileName,
         line: sourceFile.getLineAndCharacterOfPosition(node.getStart()).line + 1,

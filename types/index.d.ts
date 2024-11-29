@@ -294,8 +294,8 @@ interface CountInfo {
       name: string;
       file: string;
       line: number;
-      hasParameterTypes?: boolean;
-      hasReturnType?: boolean;
+      hasParameterTypes: boolean;
+      hasReturnType: boolean;
     }>;
   };
   tFunctionCheck: {
