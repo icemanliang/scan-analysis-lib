@@ -129,7 +129,6 @@ module.exports = {
     requiredFields: {
       name: '全小写字母，可使用中线连接多段全小写字母',
       description: '不能为空',
-      private: '必须为 true',
       packageManager: '不能为空'
     },
     requiredScripts: ['lint', 'build', 'prepare'],
