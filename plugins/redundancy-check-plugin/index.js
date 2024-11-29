@@ -87,15 +87,13 @@ class RedundancyCheckPlugin {
         const groupedClones = groupClonesByContent(clones, context.baseDir);
         
         context.scanResults.redundancyInfo = {
-          statistic: {
-            total: files.length,
-            duplicates: groupedClones.length,
-            files: new Set(clones.flatMap(c => [
-              c.duplicationA.sourceId, 
-              c.duplicationB.sourceId
-            ])).size,
-            clones: groupedClones
-          }
+          total: files.length,
+          duplicates: groupedClones.length,
+          files: new Set(clones.flatMap(c => [
+            c.duplicationA.sourceId, 
+            c.duplicationB.sourceId
+          ])).size,
+          clones: groupedClones
         };
         context.logger.log('info', `redundancy check completed, time: ${Date.now() - startTime} ms`);
       } catch(error) {

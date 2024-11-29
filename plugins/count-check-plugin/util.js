@@ -24,6 +24,32 @@ const getIssueRules = issues => {
   }));
 };
 
+// 格式化 t 函数检查结果,按文件维度聚合
+const formatTFunctionResults = (issues, baseDir) => {
+  // 按文件路径分组
+  const fileGroups = {};
+  
+  issues.forEach(issue => {
+    const filePath = path.relative(baseDir, issue.file);
+    if (!fileGroups[filePath]) {
+      fileGroups[filePath] = {
+        file: filePath,
+        issueCount: 0,
+        issues: []
+      };
+    }
+    
+    fileGroups[filePath].issueCount++;
+    fileGroups[filePath].issues.push({
+      reason: issue.reason,
+      line: issue.line
+    });
+  });
+  
+  // 转换为数组并按问题数量排序
+  return Object.values(fileGroups).sort((a, b) => b.issueCount - a.issueCount);
+}
+
 /**
  * 格式化结果
  * @param {Object} results - 结果对象
@@ -68,7 +94,7 @@ exports.formatResults = (results, baseDir) => {
     },
     tFunctionCheck: {
       total: results.tFunctionCheck.total,
-      issues: formatArray(results.tFunctionCheck.issues),
+      fileList: formatTFunctionResults(results.tFunctionCheck.issues, baseDir),
       issuesCount: results.tFunctionCheck.issues.length,
       noParamCalls: formatArray(results.tFunctionCheck.noParamCalls),
       runParamCalls: formatArray(results.tFunctionCheck.runParamCalls),

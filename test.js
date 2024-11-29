@@ -48,9 +48,7 @@ const config = {
     },
     {
       name: 'redundancy-check-plugin',
-      config: {
-        maxFilesLimit: 15000
-      }
+      config: {}
     },
     {
       name: 'git-check-plugin',
@@ -76,13 +74,13 @@ const config = {
     {
       name: 'dependency-check-plugin',
       config: {
-        ignoreMatch: ['src/component/', '__tests__/']
+        ignoreMatch: ['__tests__/']
       }
     },
-    // {
-    //   name: 'build-check-plugin',
-    //   config: {}
-    // },
+    {
+      name: 'build-check-plugin',
+      config: {}
+    },
     {
       name: 'quality-analysis-plugin',
       config: {}

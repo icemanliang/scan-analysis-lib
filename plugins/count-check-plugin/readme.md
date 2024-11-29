@@ -1,22 +1,15 @@
-# Count Check Plugin
+# 代码可用性检查插件
 
-## 功能
+## 功能介绍
+代码扫描工具的代码可用性检查插件，用于检查项目中各类代码特征的使用情况，支持函数、API、组件等多维度统计。
 
-- 统计代码中的生成器函数、类组件、DOM API、BOM API的数量
-- 统计代码中的函数总数、Hook函数数量、缺失类型声明的函数数量
+## 核心能力
+- 支持统计生成器函数使用数量
+- 支持统计 React 类组件数量
+- 支持统计 DOM/BOM API 使用情况
+- 支持统计函数总量及 Hook 使用情况
+- 支持统计缺失类型声明的函数
+- 支持自定义忽略文件配置
 
-## 配置
-- ignore: 忽略的文件和目录
-- api: API 检测配置
-- function: 函数检测配置
-- react: React 组件检测配置
-
-
-## 输出
-
-- 输出结果为JSON格式，包含以下字段：
-  - generatorFunctions: 生成器函数数量
-  - classComponents: 类组件数量
-  - domApis: DOM API数量
-  - bomApis: BOM API数量
-  - functionStats: 函数统计信息
+## 所属生命周期
+code

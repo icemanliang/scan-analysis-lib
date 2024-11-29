@@ -10,8 +10,10 @@ module.exports = {
     // 下载信息API
     downloadInfoApi: 'https://api.npmjs.org/downloads/point/last-month/',
     // 超时时间
-    apiTimeout: 5000,
+    apiTimeout: 3000,
+    // 长时未更新包时间范围判断阈值
     lastUpdateMonths: 36,
+    // 小众包每月下载量判断阈值
     monthlyDownloads: 1000
   },
   // 许可证

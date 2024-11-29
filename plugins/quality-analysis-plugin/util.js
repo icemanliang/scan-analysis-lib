@@ -57,11 +57,11 @@ exports.extractQualityInfo = (results) => {
 
   // 提取 redundancyInfo
   if (results.redundancyInfo) {
-    const clones = results.redundancyInfo.statistic?.clones || [];
+    const clones = results.redundancyInfo?.clones || [];
     qualityInfo.redundancyInfo = {
-      checkFilesCount: results.redundancyInfo.statistic?.total || 0,
+      checkFilesCount: results.redundancyInfo?.total || 0,
       duplicatesCount: clones.length,
-      files: results.redundancyInfo.statistic?.files || 0,
+      files: results.redundancyInfo?.files || 0,
       maxDuplicatesFiles: Math.max(...clones.map(c => c.files?.length || 0), 0),
       maxDuplicatesLine: Math.max(...clones.map(c => c.lines || 0), 0)
     };
