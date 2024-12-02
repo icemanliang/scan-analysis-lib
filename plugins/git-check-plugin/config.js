@@ -8,6 +8,10 @@ module.exports = {
       // kebab-case
       kebabCase: /^[a-z]+(-[a-z]+)*$/
     },
+    ignoreDirectories: [
+      '__tests__',
+      '__test__',
+    ],
     whitelist: [
       '.d.ts',
       '404.vue',

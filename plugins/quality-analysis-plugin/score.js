@@ -179,8 +179,8 @@ const SCORE_DIMENSIONS = {
   configErrors: {
     maxScore: scores.config.errors.maxScore,
     calculate: (qualityInfo) => {
-      if (!qualityInfo.configInfo?.configErrorsCount) return scores.config.errors.maxScore;
-      const errors = qualityInfo.configInfo?.configErrorsCount || 0;
+      if (!qualityInfo.configInfo?.configInfoInvalidErrorCount) return scores.config.errors.maxScore;
+      const errors = qualityInfo.configInfo?.configInfoInvalidErrorCount || 0;
       return Number(Math.max(0, scores.config.errors.maxScore * 
         (1 - errors / scores.config.errors.maxErrors)).toFixed(2));
     }
@@ -316,7 +316,7 @@ const SCORE_DIMENSIONS = {
   },
 
   // 可更新包评分
-  // 计算逻辑：存在可更新包得 0 分，否则得满分
+  // 计算逻辑：存在可更新包，则扣分
   updatePackages: {
     maxScore: scores.packages.update.maxScore,
     calculate: (qualityInfo) => qualityInfo.packageInfo?.updatePackagesCount > 0 ? 0 : scores.packages.update.maxScore

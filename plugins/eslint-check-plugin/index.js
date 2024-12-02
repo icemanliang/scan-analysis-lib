@@ -90,6 +90,7 @@ class EslintCheckPlugin {
   // 注册插件
   async apply(scanner) {
     scanner.hooks.code.tapPromise(this.name, async (context) => {
+      // this.devLog('config check', this.config);
       try {
         context.logger.log('info', 'start eslint check...');
         const startTime = Date.now();

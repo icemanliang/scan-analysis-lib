@@ -41,7 +41,7 @@ module.exports = {
     directory: {
       depth: {
         maxScore: 1, // 目录深度评分的最高分
-        maxDepth: 5 // 允许的最大目录深度，超过后得0分
+        maxDepth: 6 // 允许的最大目录深度，超过后得0分
       },
       deep: {
         maxScore: 2, // 深层目录数量评分的最高分
@@ -65,8 +65,8 @@ module.exports = {
     },
     config: {
       errors: {
-        maxScore: 8, // 配置错误评分的最高分
-        maxErrors: 100 // 允许的最大配置错误数，超过后按比例扣分
+        maxScore: 7, // 配置错误评分的最高分
+        maxErrors: 20 // 允许的最大配置错误数，超过后按比例扣分
       },
       readme: {
         maxScore: 1, // readme 配置评分的最高分
@@ -107,12 +107,12 @@ module.exports = {
     },
     apis: {
       bom: {
-        maxScore: 2, // BOM API 使用评分的最高分
-        maxCallsPerFile: 10 // 单文件允许的最大调用次数，使用对数计算扣分
+        maxScore: 3, // BOM API 使用评分的最高分
+        maxCallsPerFile: 3 // 单文件允许的最大调用次数，使用对数计算扣分
       },
       dom: {
-        maxScore: 2, // DOM API 使用评分的最高分
-        maxCallsPerFile: 10 // 单文件允许的最大调用次数，使用对数计算扣分
+        maxScore: 3, // DOM API 使用评分的最高分
+        maxCallsPerFile: 3 // 单文件允许的最大调用次数，使用对数计算扣分
       }
     },
     packages: {
@@ -123,7 +123,7 @@ module.exports = {
         maxScore: 1 // 风险依赖包评分的最高分
       },
       update: {
-        maxScore: 1 // 可更新依赖包评分的最高分
+        maxScore: 3 // 可更新依赖包评分的最高分
       }
     }
   }

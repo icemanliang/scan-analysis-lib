@@ -48,6 +48,7 @@ class CountCheckPlugin {
   // 注册插件
   apply(scanner) {
     scanner.hooks.code.tapPromise(this.name, async (context) => {
+      // this.devLog('config check', this.config);
       try {
         context.logger.log('info', 'start count check...');
         const startTime = Date.now();

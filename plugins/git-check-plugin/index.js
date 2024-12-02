@@ -25,6 +25,7 @@ class GitCheckPlugin {
   // 注册插件
   apply(scanner) {
     scanner.hooks.project.tapPromise(this.name, async (context) => {
+      // this.devLog('config check', this.config);
       try {
         context.logger.log('info', 'start git check...');
         const startTime = Date.now();
@@ -86,7 +87,7 @@ class GitCheckPlugin {
     );
     results.directoryDepth = depthResults;
 
-    this.devLog('runChecks', results);
+    // this.devLog('runChecks', results);
     return results;
   }
 
@@ -119,7 +120,7 @@ class GitCheckPlugin {
     
     results.fileStats[ext].count++;
     results.fileStats[ext].totalSize += stats.size;
-    this.devLog('fileStats', results.fileStats);
+    // this.devLog('fileStats', results.fileStats);
   }
 
   // 检查文件命名
@@ -131,17 +132,18 @@ class GitCheckPlugin {
         results.namingIssues.files.push(relativePath);
       }
     }
-    this.devLog('fileNaming', results.namingIssues);
+    // this.devLog('fileNaming', results.namingIssues);
   }
 
   // 检查目录命名
   checkDirectoryNaming(dirPath, baseDir, results) {
     const dirName = path.basename(dirPath);
-    if (!this.isValidNaming(dirName)) {
+    // 排除命中忽略目录的情况
+    if (!this.isValidNaming(dirName) && !this.config.naming.ignoreDirectories.some(item => dirName.indexOf(item) !== -1)) {
       const relativePath = path.relative(baseDir, dirPath);
       results.namingIssues.directories.push(relativePath);
     }
-    this.devLog('directoryNaming', results.namingIssues);
+    // this.devLog('directoryNaming', results.namingIssues);
   }
 
   // 检查命名是否符合规范
@@ -182,7 +184,7 @@ class GitCheckPlugin {
     });
     
     result.isValid = result.errors.length === 0;
-    this.devLog('huskyCheck', result);
+    // this.devLog('huskyCheck', result);
     return result;
   }
 
@@ -218,7 +220,7 @@ class GitCheckPlugin {
     } catch (error) {
       result.errors.push(error.message);
     }
-    this.devLog('gitignoreCheck', result);
+    // this.devLog('gitignoreCheck', result);
     return result;
   }
 
@@ -257,7 +259,7 @@ class GitCheckPlugin {
 
     // 按深度降序排序
     result.deepDirectories.sort((a, b) => b.depth - a.depth);
-    this.devLog('directoryDepth', result.deepDirectories);
+    // this.devLog('directoryDepth', result.deepDirectories);
     return result;
   }
 }

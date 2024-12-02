@@ -21,6 +21,7 @@ class ConfigCheckPlugin {
   // 注册插件
   apply(scanner) {
     scanner.hooks.project.tapPromise(this.name, async (context) => {
+      // this.devLog('config check', this.config);
       try {
         context.logger.log('info', 'start config check...');
         const startTime = Date.now()
@@ -32,73 +33,73 @@ class ConfigCheckPlugin {
         if (checks.commitlint) {
           const checkCommitlint = require('./lib/checkCommitlint');
           results.commitlint = await checkCommitlint(context.baseDir, this.config.commitlint);
-          this.devLog('commitlint', results.commitlint);
+          // this.devLog('commitlint', results.commitlint);
         }
         // prettierconfig 检查
         if (checks.prettier) {
           const checkPrettierrc = require('./lib/checkPrettierrc');
           results.prettier = await checkPrettierrc(context.baseDir, this.config.prettier);
-          this.devLog('prettier', results.prettier);
+          // this.devLog('prettier', results.prettier);
         }
         // readme 检查
         if (checks.readme) {
           const checkReadme = require('./lib/checkReadme');
           results.readme = await checkReadme(context.baseDir, this.config.readme);
-          this.devLog('readme', results.readme);
+          // this.devLog('readme', results.readme);
         }
         // npmrc 检查
         if (checks.npmrc) {
           const checkNpmrc = require('./lib/checkNpmrc');
           results.npmrc = await checkNpmrc(context.baseDir, this.config.npmrc);
-          this.devLog('npmrc', results.npmrc);
+          // this.devLog('npmrc', results.npmrc);
         }
         // eslintconfig 检查
         if (checks.eslint) {
           const checkEslintrc = require('./lib/checkEslintrc');
           results.eslint = await checkEslintrc(context.baseDir, this.config.eslint);
-          this.devLog('eslint', results.eslint);
+          // this.devLog('eslint', results.eslint);
         }
         // tsconfig 检查
         if (checks.tsconfig) {
           const checkTsconfig = require('./lib/checkTsconfig');
           results.tsconfig = await checkTsconfig(context.baseDir, this.config.tsconfig);
-          this.devLog('tsconfig', results.tsconfig);
+          // this.devLog('tsconfig', results.tsconfig);
         }
         // node 版本检查
         if (checks.nodeVersion) {
           const checkNodeVersion = require('./lib/checkNodeVersion');
           results.nodeVersion = await checkNodeVersion(context.baseDir, this.config.nodeVersion);
-          this.devLog('nodeVersion', results.nodeVersion);
+          // this.devLog('nodeVersion', results.nodeVersion);
         }
         // editorconfig 检查
         if (checks.editorconfig) {
           const checkEditorconfig = require('./lib/checkEditorconfig');
           results.editorconfig = await checkEditorconfig(context.baseDir, this.config.editorconfig);
-          this.devLog('editorconfig', results.editorconfig);
+          // this.devLog('editorconfig', results.editorconfig);
         }
         // package.json 检查
         if (checks.packageJson) {
           const checkPackageJson = require('./lib/checkPackageJson');
           results.packageJson = await checkPackageJson(context.baseDir, this.config.packageJson);
-          this.devLog('packageJson', results.packageJson);
+          // this.devLog('packageJson', results.packageJson);
         }
         // license 检查
         if (checks.license) {
           const checkLicense = require('./lib/checkLicense');
           results.license = await checkLicense(context.baseDir, this.config.license);
-          this.devLog('license', results.license);
+          // this.devLog('license', results.license);
         }
         // ignoreFiles 检查
         if (checks.ignoreFiles) {
           const checkIgnoreFiles = require('./lib/checkIgnoreFiles');
           results.ignoreFiles = await checkIgnoreFiles(context.baseDir, this.config.ignoreFiles);
-          this.devLog('ignoreFiles', results.ignoreFiles);
+          // this.devLog('ignoreFiles', results.ignoreFiles);
         }
         // browserslist 检查
         if (checks.browserslist) {
           const checkBrowserslist = require('./lib/checkBrowserslist');
           results.browserslist = await checkBrowserslist(context.baseDir, this.config.browserslist);
-          this.devLog('browserslist', results.browserslist);
+          // this.devLog('browserslist', results.browserslist);
         }
 
         context.scanResults.configInfo = results;

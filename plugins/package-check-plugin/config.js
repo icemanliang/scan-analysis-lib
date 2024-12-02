@@ -44,21 +44,17 @@ module.exports = {
     // 日期处理
     ['moment', 'dayjs', 'date-fns'],
     // HTTP 请求
-    ['axios', 'request', 'node-fetch'],
-    // 工具库
-    ['lodash', 'underscore'],   
+    ['axios', 'request', 'node-fetch'],  
     // 状态管理
     ['redux', 'mobx', 'vuex'],
     // 测试框架
     ['jest', 'mocha', 'vitest'],
     // E2E 测试
-    ['cypress', 'playwright', 'puppeteer', 'selenium-webdriver'],
+    ['cypress', 'playwright', 'puppeteer'],
     // 打包工具
     ['webpack', 'rollup', 'parcel', 'esbuild', 'vite'],
     // 进程管理
     ['pm2', 'forever', 'nodemon', 'supervisor'],
-    // 命令行工具
-    ['commander', 'yargs', 'meow', 'minimist'],
     // 日志工具
     ['winston', 'bunyan', 'pino', 'log4js'],
   ],
@@ -85,11 +81,6 @@ module.exports = {
     vue: {
       minVersion: '3.0.0',
       message: '建议升级到 Vue 3 以使用组合式 API 和更好的 TypeScript 支持'
-    },
-    // 工具链
-    '@babel/core': {
-      minVersion: '7.0.0',
-      message: '建议升级到 Babel 7 以获得更好的性能和特性支持'
     },
     husky: {
       minVersion: '8.0.0',

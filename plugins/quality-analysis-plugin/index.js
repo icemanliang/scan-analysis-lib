@@ -20,6 +20,7 @@ class QualityAnalysisPlugin {
 
   apply(scanner) {
     scanner.hooks.quality.tapPromise(this.name, async (context) => {
+      // this.devLog('config check', this.config);
       try {
         context.logger.log('info', 'start quality analyze...');
         const startTime = Date.now();

@@ -28,6 +28,7 @@ class BuildCheckPlugin {
   // 注册插件
   apply(scanner) {
     scanner.hooks.project.tapPromise(this.name, async (context) => {
+      // this.devLog('config check', this.config);
       if(context.buildDir === '') {
         context.logger.log('warn', 'build directory is not exists, skip build check.');
         context.scanResults.buildInfo = null;

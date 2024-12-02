@@ -30,6 +30,7 @@ class DependencyCheckPlugin {
   // 注册插件
   apply(scanner) {
     scanner.hooks.dependency.tapPromise(this.name, async (context) => {
+      // this.devLog('config check', this.config);
       try {
         context.logger.log('info', 'start dependency check...');
         const startTime = Date.now();

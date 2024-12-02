@@ -26,6 +26,7 @@ class PackageCheckPlugin {
   // 注册插件
   async apply(scanner) {
     scanner.hooks.dependency.tapPromise(this.name, async (context) => {
+      // this.devLog('config check', this.config);
       try {
         context.logger.log('info', 'start package check...');
         const startTime = Date.now();
