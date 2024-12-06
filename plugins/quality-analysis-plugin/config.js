@@ -13,12 +13,12 @@ module.exports = {
         maxWarningsPerFile: 3 // 单文件允许的最大 warning 数，超过后得0分
       },
       fileRatio: {
-        maxScore: 5 // ESLint 检查文件覆盖率评分的最高分
+        maxScore: 4 // ESLint 检查文件覆盖率评分的最高分
       }
     },
     stylelint: {
       avgErrors: {
-        maxScore: 8, // StyleLint 错误评分的最高分
+        maxScore: 5, // StyleLint 错误评分的最高分
         maxErrorsPerFile: 6 // 单文件允许的最大错误数，超过后得0分
       },
       fileRatio: {
@@ -40,7 +40,7 @@ module.exports = {
     },
     directory: {
       depth: {
-        maxScore: 1, // 目录深度评分的最高分
+        maxScore: 2, // 目录深度评分的最高分
         maxDepth: 6 // 允许的最大目录深度，超过后得0分
       },
       deep: {
@@ -65,11 +65,11 @@ module.exports = {
     },
     config: {
       errors: {
-        maxScore: 7, // 配置错误评分的最高分
+        maxScore: 8, // 配置错误评分的最高分
         maxErrors: 20 // 允许的最大配置错误数，超过后按比例扣分
       },
       readme: {
-        maxScore: 1, // readme 配置评分的最高分
+        maxScore: 2, // readme 配置评分的最高分
       },
       packageJson: {
         maxScore: 1, // packageJson 配置评分的最高分
