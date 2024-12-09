@@ -85,7 +85,7 @@ class DependencyCheckPlugin {
                 }
                 externalDependencies[packageName].detailedImports[formattedFilePath].push(...importedNames);
               } else {
-                // 内部依赖
+                // 内部依��
                 const formattedImportedFilePath = path.relative(context.baseDir, importedFilePath);
                 if (!internalDependencies[formattedImportedFilePath]) {
                   internalDependencies[formattedImportedFilePath] = { count: 0, dependents: [] };
@@ -195,7 +195,18 @@ class DependencyCheckPlugin {
   getPackageNameFromPath(fullPath) {
     const parts = fullPath.split('node_modules/');
     const packagePath = parts[parts.length - 1];
-    return packagePath.split('/')[0];
+    const pathSegments = packagePath.split('/');
+
+    // 处理作用域包 (@org/package)
+    if (pathSegments[0].startsWith('@')) {
+      // 确保作用域包名完整 (@org/package)
+      if (pathSegments.length >= 2) {
+        return `${pathSegments[0]}/${pathSegments[1]}`;
+      }
+    }
+
+    // 非作用域包保持原有逻辑
+    return pathSegments[0];
   }
 
   // 新增方法：获取 package.json 内容

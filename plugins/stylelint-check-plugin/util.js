@@ -44,7 +44,7 @@ exports.formatResults = (results, baseDir) => {
  * @param {Array} results - stylelint 原始结果
  * @returns {Object} 分析结果
  */
-exports.analyzeResults = (results) => {
+exports.analyzeResults = (results, baseDir) => {
   // 初始化规则统计对象
   const rules = {};
 
@@ -64,7 +64,7 @@ exports.analyzeResults = (results) => {
 
       rules[warning.rule].count++;
       rules[warning.rule].locations.push({
-        file: result.source,
+        file: path.relative(baseDir, result.source),
         line: warning.line,
         message: warning.text.replace(/\s*\([^)]*\)/g, '') // 移除消息中的规则引用
       });

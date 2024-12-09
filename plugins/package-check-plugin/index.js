@@ -171,7 +171,7 @@ class PackageCheckPlugin {
       return riskPackages;
     }
     for (const [name, info] of Object.entries(dependencies)) {
-      if (privatePackages.includes(name)) continue;
+      if (privatePackages.includes(name) || this.config.riskThreshold.whiteList.includes(name)) continue;
 
       const npmInfo = await this.fetchNpmPackageInfo(name);
       if (!npmInfo) continue;

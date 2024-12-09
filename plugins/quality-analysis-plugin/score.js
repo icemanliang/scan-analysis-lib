@@ -263,13 +263,17 @@ const SCORE_DIMENSIONS = {
   invalidNames: {
     maxScore: scores.codeQuality.invalidNames.maxScore,
     calculate: (qualityInfo) => {
-      if (!qualityInfo.gitInfo?.totalFilesCount) return scores.codeQuality.invalidNames.maxScore;
+      if (!qualityInfo.gitInfo?.totalFiles) return scores.codeQuality.invalidNames.maxScore;
       
-      const invalidCount = (qualityInfo.gitInfo?.invalidNameFilesCount || 0) + 
-                         (qualityInfo.gitInfo?.invalidNameDirectoriesCount || 0);
+      const invalidRatio = ((qualityInfo.gitInfo?.fileNamingIssuesCount || 0) + 
+                         (qualityInfo.gitInfo?.directoryNamingIssuesCount || 0)) / qualityInfo.gitInfo.totalFiles;
+      if (invalidRatio <= scores.codeQuality.invalidNames.threshold) {
+        return scores.codeQuality.invalidNames.maxScore;
+      }
       
-      const ratio = invalidCount / qualityInfo.gitInfo.totalFilesCount;
-      return Number(Math.max(0, scores.codeQuality.invalidNames.maxScore * (1 - ratio)).toFixed(2));
+      return Number(Math.max(0, scores.codeQuality.invalidNames.maxScore * 
+        (1 - (invalidRatio - scores.codeQuality.invalidNames.threshold) / 
+        scores.codeQuality.invalidNames.penaltyFactor)).toFixed(2));
     }
   },
 
@@ -281,9 +285,10 @@ const SCORE_DIMENSIONS = {
       if (!qualityInfo.countInfo?.totalFilesCount) return scores.apis.bom.maxScore;
       const avgCalls = qualityInfo.countInfo.bomApiTotalCount / qualityInfo.countInfo.totalFilesCount;
       
-      const score = scores.apis.bom.maxScore * 
-        (1 - Math.log10(avgCalls + 1) / Math.log10(scores.apis.bom.maxCallsPerFile + 1));
-      return Number(Math.max(0, score).toFixed(2));
+      if (avgCalls <= scores.apis.bom.threshold) return scores.apis.bom.maxScore;
+      
+      return Number(Math.max(0, scores.apis.bom.maxScore * 
+        (1 - (avgCalls - scores.apis.bom.threshold) / scores.apis.bom.penaltyFactor)).toFixed(2));
     }
   },
 
@@ -295,9 +300,10 @@ const SCORE_DIMENSIONS = {
       if (!qualityInfo.countInfo?.totalFilesCount) return scores.apis.dom.maxScore;
       const avgCalls = qualityInfo.countInfo.domApiTotalCount / qualityInfo.countInfo.totalFilesCount;
       
-      const score = scores.apis.dom.maxScore * 
-        (1 - Math.log10(avgCalls + 1) / Math.log10(scores.apis.dom.maxCallsPerFile + 1));
-      return Number(Math.max(0, score).toFixed(2));
+      if (avgCalls <= scores.apis.dom.threshold) return scores.apis.dom.maxScore;
+      
+      return Number(Math.max(0, scores.apis.dom.maxScore * 
+        (1 - (avgCalls - scores.apis.dom.threshold) / scores.apis.dom.penaltyFactor)).toFixed(2));
     }
   },
 
@@ -309,14 +315,20 @@ const SCORE_DIMENSIONS = {
   },
 
   // 风险包评分
-  // 计算逻辑：存在风险包得 0 分，否则得满分
+  // 计算逻辑：风险包数量超过阈值后，按惩罚系数计算扣分
   riskPackages: {
     maxScore: scores.packages.risk.maxScore,
-    calculate: (qualityInfo) => qualityInfo.packageInfo?.riskPackagesCount > 0 ? 0 : scores.packages.risk.maxScore
+    calculate: (qualityInfo) => {
+      const riskCount = qualityInfo.packageInfo?.riskPackagesCount || 0;
+      if (riskCount <= scores.packages.risk.threshold) return scores.packages.risk.maxScore;
+      
+      return Number(Math.max(0, scores.packages.risk.maxScore * 
+        (1 - (riskCount - scores.packages.risk.threshold) / scores.packages.risk.penaltyFactor)).toFixed(2));
+    }
   },
 
   // 可更新包评分
-  // 计算逻辑：存在可更新包，则扣分
+  // 计算逻辑：存在可更新包得0分，否则得满分
   updatePackages: {
     maxScore: scores.packages.update.maxScore,
     calculate: (qualityInfo) => qualityInfo.packageInfo?.updatePackagesCount > 0 ? 0 : scores.packages.update.maxScore

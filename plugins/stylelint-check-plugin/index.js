@@ -69,7 +69,7 @@ class StylelintCheckPlugin {
 
         // 格式化结果
         const formattedResults = formatResults(allResults, context.baseDir);
-        const analysis = analyzeResults(allResults);
+        const analysis = analyzeResults(allResults, context.baseDir);
 
         context.scanResults.stylelintInfo = {
           totalFilesCount,

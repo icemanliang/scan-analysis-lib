@@ -6,7 +6,7 @@ module.exports = {
   scoreDimensions: {
     eslint: {
       avgIssues: {
-        maxScore: 20, // ESLint 错误评分的最高分
+        maxScore: 18, // ESLint 错误评分的最高分
         errorWeight: 0.7, // error 级别问题的权重
         warningWeight: 0.3, // warning 级别问题的权重
         maxErrorsPerFile: 3, // 单文件允许的最大 error 数，超过后得0分
@@ -18,7 +18,7 @@ module.exports = {
     },
     stylelint: {
       avgErrors: {
-        maxScore: 5, // StyleLint 错误评分的最高分
+        maxScore: 4, // StyleLint 错误评分的最高分
         maxErrorsPerFile: 6 // 单文件允许的最大错误数，超过后得0分
       },
       fileRatio: {
@@ -28,8 +28,8 @@ module.exports = {
     duplication: {
       maxLines: {
         maxScore: 5, // 代码重复行数评分的最高分
-        threshold: 20, // 允许的最大重复行数阈值
-        penaltyFactor: 50 // 超过阈值后的惩罚系数，越大惩罚越小
+        threshold: 30, // 允许的最大重复行数阈值
+        penaltyFactor: 100 // 超过阈值后的惩罚系数，越大惩罚越小
       },
       filesRatio: {
         maxScore: 3 // 重复文件占比评分的最高分
@@ -41,7 +41,7 @@ module.exports = {
     directory: {
       depth: {
         maxScore: 2, // 目录深度评分的最高分
-        maxDepth: 6 // 允许的最大目录深度，超过后得0分
+        maxDepth: 5 // 允许的最大目录深度，超过后得0分
       },
       deep: {
         maxScore: 2, // 深层目录数量评分的最高分
@@ -65,7 +65,7 @@ module.exports = {
     },
     config: {
       errors: {
-        maxScore: 8, // 配置错误评分的最高分
+        maxScore: 10, // 配置错误评分的最高分
         maxErrors: 20 // 允许的最大配置错误数，超过后按比例扣分
       },
       readme: {
@@ -102,17 +102,21 @@ module.exports = {
         maxScore: 3 // TypeScript 使用率评分的最高分
       },
       invalidNames: {
-        maxScore: 3 // 命名规范评分的最高分
+        maxScore: 3,
+        threshold: 0.01,        // 允许的不规范命名文件/目录数量阈值
+        penaltyFactor: 0.2    // 超过阈值后的惩罚系数
       }
     },
     apis: {
       bom: {
-        maxScore: 3, // BOM API 使用评分的最高分
-        maxCallsPerFile: 3 // 单文件允许的最大调用次数，使用对数计算扣分
+        maxScore: 3,
+        threshold: 0.1,        // 每个文件平均允许的 BOM API 调用次数阈值
+        penaltyFactor: 0.5     // 超过阈值后的惩罚系数
       },
       dom: {
-        maxScore: 3, // DOM API 使用评分的最高分
-        maxCallsPerFile: 3 // 单文件允许的最大调用次数，使用对数计算扣分
+        maxScore: 3,
+        threshold: 0.1,        // 每个文件平均允许的 DOM API 调用次数阈值
+        penaltyFactor: 0.5     // 超过阈值后的惩罚系数
       }
     },
     packages: {
@@ -120,10 +124,12 @@ module.exports = {
         maxScore: 1 // 相似依赖包评分的最高分
       },
       risk: {
-        maxScore: 1 // 风险依赖包评分的最高分
+        maxScore: 3,
+        threshold: 3,  // 风险包数量阈值
+        penaltyFactor: 10  // 惩罚系数
       },
       update: {
-        maxScore: 3 // 可更新依赖包评分的最高分
+        maxScore: 2 // 可更新依赖包评分的最高分
       }
     }
   }

@@ -11,8 +11,10 @@ module.exports = {
     downloadInfoApi: 'https://api.npmjs.org/downloads/point/last-month/',
     // 超时时间
     apiTimeout: 3000,
+    // 白名单包
+    whiteList: [],
     // 长时未更新包时间范围判断阈值
-    lastUpdateMonths: 36,
+    lastUpdateMonths: 48,
     // 小众包每月下载量判断阈值
     monthlyDownloads: 1000
   },
@@ -61,16 +63,16 @@ module.exports = {
   // 版本升级
   versionUpgrades: {
     // 构建工具
-    webpack: {
+    'webpack': {
       minVersion: '5.0.0',
       message: '建议升级到 webpack 5 以获得更好的构建性能和模块联邦特性'
     },
-    vite: {
+    'vite': {
       minVersion: '4.0.0',
       message: '建议升级到 vite 4+ 以获得更好的性能和稳定性'
     },
     // 框架相关
-    react: {
+    'react': {
       minVersion: '16.8.2',
       message: '建议升级到支持 Hooks 的 React 版本'
     },
@@ -78,23 +80,23 @@ module.exports = {
       minVersion: '16.8.2',
       message: '建议与 React 版本保持一致，升级到支持 Hooks 的版本'
     },
-    vue: {
+    'vue': {
       minVersion: '3.0.0',
       message: '建议升级到 Vue 3 以使用组合式 API 和更好的 TypeScript 支持'
     },
-    husky: {
+    'husky' : {
       minVersion: '8.0.0',
       message: '建议升级到 husky v8+ 以使用新的配置方式和更好的 Git Hooks 支持'
     },
-    typescript: {
+    'typescript': {
       minVersion: '4.5.0',
       message: '建议升级到 TypeScript 4.5+ 以获得更好的类型推导和语言特性'
     },
-    eslint: {
+    'eslint': {
       minVersion: '8.0.0',
       message: '建议升级到 ESLint 8 以获得更好的性能和规则支持'
     },
-    prettier: {
+    'prettier': {
       minVersion: '2.0.0',
       message: '建议升级到 Prettier 2+ 以获得更好的格式化支持'
     }
