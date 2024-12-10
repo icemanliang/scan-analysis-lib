@@ -63,7 +63,7 @@ class EslintCheckPlugin {
         parserOptions: {
           ...this.config.parserOptions,
           parser: useTypeScript ? '@typescript-eslint/parser' : '@babel/eslint-parser',
-          ...(useTypeScript ? { project: path.join(context.baseDir, 'tsconfig.json') } : {}),
+          // ...(useTypeScript ? { project: path.join(context.baseDir, 'tsconfig.json') } : {}),
           extraFileExtensions: hasVue ? ['.vue'] : []
         },
         settings: !hasVue ? this.config.settings : {},
@@ -99,7 +99,7 @@ class EslintCheckPlugin {
         const hasVue = this.hasVueFiles(context.baseDir, context.codeDir);
 
         const eslintConfig = this.getEslintConfig(useTypeScript, hasVue, context);
-        this.devLog('eslintConfig', eslintConfig);
+        // this.devLog('eslintConfig', eslintConfig);
 
         const eslint = new ESLint({
           ...eslintConfig,
