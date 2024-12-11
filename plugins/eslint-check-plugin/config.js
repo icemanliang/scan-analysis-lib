@@ -37,19 +37,17 @@ module.exports = {
   // 基础规则
   baseRules: {
     // 函数必须包含注释说明(自定义插件)
-    // 'require-any-comment': ['error'],
-    // 函数必须包含jsdoc注释说明
-    // 'jsdoc/require-jsdoc': 'error',
-    // 函数，方法，类设置jsdoc注释说明
-    'jsdoc/require-jsdoc': ['error', {
-        'require': {
-          'FunctionDeclaration': true,
-          'MethodDefinition': true,
-          'ClassDeclaration': true,
-          'ArrowFunctionExpression': true,
-          'FunctionExpression': false
-        }
-    }],
+    'require-any-comment': ['error'],
+    // 函数，方法，类设置jsdoc注释说明(更严格)
+    // 'jsdoc/require-jsdoc': ['error', {
+    //     'require': {
+    //       'FunctionDeclaration': true,
+    //       'MethodDefinition': true,
+    //       'ClassDeclaration': true,
+    //       'ArrowFunctionExpression': true,
+    //       'FunctionExpression': false
+    //     }
+    // }],
     'jsdoc/require-description': ['warn', {
       'descriptionStyle': 'tag'
     }],
