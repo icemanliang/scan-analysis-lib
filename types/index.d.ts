@@ -1,25 +1,7 @@
 import { AsyncSeriesHook } from "tapable";
 
-// 插件配置接口
-interface PluginConfig {
-  name: string;
-  config: Record<string, any>;
-}
-// 基础配置接口
-interface ScannerOptions {
-  resultDir: string;
-  maxWorkerNum: number;
-  sources: Array<{
-    appName: string;
-    baseDir: string;
-    codeDir: string;
-    buildDir?: string;
-    aliasConfig: {
-      [key: string]: string[];
-    };
-  }>;
-  plugins?: Array<PluginConfig>;    
-}
+// 扫描函数
+declare function scan(config: ScannerOptions): Promise<ScannerResults>;
 
 // 扫描应用目录配置
 interface Source {
@@ -31,8 +13,34 @@ interface Source {
     [key: string]: string[];
   };
 }
+// 插件配置接口
+interface PluginConfig {
+  name: string;
+  config: Record<string, any>;
+}
+// 基础配置接口
+interface ScannerOptions {
+  resultDir: string;
+  maxWorkerNum: number;
+  sources: Array<Source>;
+  plugins?: Array<PluginConfig>;    
+}
 
-// 上下文接口
+interface Manifest {
+  appName: string;
+  duration: number;
+  resultFile: string;
+  logFile: string;
+}
+
+// 扫描结果接口
+interface ScannerResults {
+  scanResults: Array<Manifest>;
+  scanTotalTime: number;
+  scanLogFile: string;
+}
+
+// worker 上下文接口
 interface Context {
   appName: string;
   baseDir: string;        
@@ -41,7 +49,7 @@ interface Context {
   aliasConfig: {
     [key: string]: string[];
   };
-  scanResults: ScanResults;
+  scanResults: WorkerResult;
   logger: Logger;
 }
 
@@ -157,18 +165,9 @@ declare class Scanner {
   queue: Array<Source>;
   logger: Logger;
   // 扫描入口方法
-  scan(): Promise<{
-    scanResults: ScanResults;
-    scanTotalTime: number;
-    scanLogFile: string;
-  }>;
+  scan(): Promise<ScannerResults>;
   // 创建工作进程
-  createWorker(source: Source): Promise<{
-    appName: string;
-    duration: number;
-    resultFile: string;
-    logFile: string;
-  }>;
+  createWorker(source: Source): Promise<Manifest>;
 }
 
 // worker 类
@@ -176,7 +175,7 @@ declare class Worker {
   source: Source;
   resultFile: string;
   logFile: string;
-  scanResults: ScanResults;
+  scanResults: WorkerResult;
   plugins: Array<PluginConfig>;
   logger: Logger;
   hooks: {
@@ -192,9 +191,9 @@ declare class Worker {
   // 注册插件
   usePlugin(plugin: Plugin): void;
   // 运行插件
-  runPlugin(): Promise<ScanResults>;
+  runPlugin(): Promise<WorkerResult>;
   // 保存扫描结果
-  saveResults(results: ScanResults): void;
+  saveResults(results: WorkerResult): void;
 }
 
   // ESLint检查结果
@@ -606,8 +605,8 @@ interface QualityInfo {
   };
 }
 
-  // 最终扫描结果
-interface ScanResults {
+  // worker进程扫描结果
+interface WorkerResult {
   eslintInfo?: EslintInfo;                    
   stylelintInfo?: StylelintInfo;              
   countInfo?: CountInfo;                         

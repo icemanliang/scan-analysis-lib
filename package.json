@@ -1,6 +1,6 @@
 {
   "name": "scan-analysis-lib",
-  "version": "0.9.1",
+  "version": "1.0.0",
   "description": "a tool to scan and analyze the code of the projects",
   "main": "index.js",
   "module": "index.js",
