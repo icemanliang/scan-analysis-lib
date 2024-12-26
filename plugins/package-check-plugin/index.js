@@ -30,19 +30,47 @@ class PackageCheckPlugin {
       try {
         context.logger.log('info', 'start package check...');
         const startTime = Date.now();
-        
-        const packageJson = this.readPackageJson(context.baseDir);
-        const lockFile = this.findLockFile(context.baseDir);
-        const dependencies = this.analyzeDependencies(packageJson, lockFile);
-        
-        const privatePackages = this.identifyPrivatePackages(dependencies);
-        const analysis = {
-          dependencies,
-          privatePackages,
-          riskPackages: await this.identifyRiskPackages(dependencies, privatePackages),
-          similarPackages: this.checkSimilarPackages(dependencies),
-          versionUpgrades: this.checkVersionUpgrades(dependencies) // 新增版本升级检查
-        };
+        let analysis = {};
+
+        if(context.subDirs && context.subDirs.length > 0){
+          // 子目录多包情况，继续扫描
+          for(const dir of context.subDirs){
+            const subDirPath = context.baseDir + '/' + context.codeDir + '/' + dir;
+            const packageJson = this.readPackageJson(subDirPath);
+            const lockFile = this.findLockFile(context.baseDir);
+            const dependencies = this.analyzeDependencies(packageJson, lockFile, dir);
+            
+            const privatePackages = this.identifyPrivatePackages(dependencies);
+
+            // 合并结果
+            const simpleAnalysis = {
+              dependencies,
+              privatePackages,
+              riskPackages: await this.identifyRiskPackages(dependencies, privatePackages),
+              similarPackages: this.checkSimilarPackages(dependencies),
+              versionUpgrades: this.checkVersionUpgrades(dependencies) // 新增版本升级检查
+            };
+            // console.log('simpleAnalysis ===>', JSON.stringify(simpleAnalysis, null, 2));
+            analysis = {
+              ...analysis,
+              ...simpleAnalysis
+            };
+          }
+        }else{
+          // 单包情况，直接扫描
+          const packageJson = this.readPackageJson(context.baseDir);
+          const lockFile = this.findLockFile(context.baseDir);
+          const dependencies = this.analyzeDependencies(packageJson, lockFile, '');
+          
+          const privatePackages = this.identifyPrivatePackages(dependencies);
+          analysis = {
+            dependencies,
+            privatePackages,
+            riskPackages: await this.identifyRiskPackages(dependencies, privatePackages),
+            similarPackages: this.checkSimilarPackages(dependencies),
+            versionUpgrades: this.checkVersionUpgrades(dependencies) // 新增版本升级检查
+          };
+        }
 
         context.scanResults.packageInfo = analysis;
         context.logger.log('info', `package check completed, time: ${Date.now() - startTime} ms`);
@@ -72,14 +100,14 @@ class PackageCheckPlugin {
   }
 
   // 分析依赖
-  analyzeDependencies(packageJson, lockFile) {
+  analyzeDependencies(packageJson, lockFile, subDir='') {
     const dependencies = { ...packageJson.dependencies, ...packageJson.devDependencies };
     const result = {};
 
     for (const [name, declaredVersion] of Object.entries(dependencies)) {
       result[name] = {
         declaredVersion,
-        lockedVersion: this.getLockedVersion(name, lockFile)
+        lockedVersion: this.getLockedVersion(name, lockFile, subDir)
       };
     }
 
@@ -88,7 +116,7 @@ class PackageCheckPlugin {
   }
 
   // 获取锁文件中的版本
-  getLockedVersion(packageName, lockFile) {
+  getLockedVersion(packageName, lockFile, subDir='') {
     try {
       if (!lockFile) return null;
       
@@ -111,12 +139,24 @@ class PackageCheckPlugin {
         
         case 'pnpm-lock.yaml': {
           const lockFileContent = yaml.load(content);
+          // console.log('lockFileContent =========>', Object.keys(lockFileContent.importers));
+
           // pnpm-lock.yaml v6 格式
-          if (lockFileContent.packages) {
-            for (const [pkgPath, pkgInfo] of Object.entries(lockFileContent.packages)) {
-              if (pkgPath.includes(`/${packageName}/`)) {
-                version = pkgInfo.version;
-                break;
+          if (lockFileContent.importers) {
+            if(subDir){
+              for (const [pkgPath, pkgInfo] of Object.entries(lockFileContent.importers['packages/' + subDir].dependencies)) {
+                // console.log('pkgPath =========>', packageName);
+                if (pkgPath.includes(packageName)) {
+                  version = pkgInfo.version;
+                  break;
+                }
+              }
+            }else{
+              for (const [pkgPath, pkgInfo] of Object.entries(lockFileContent.importers.dependencies)) {
+                if (pkgPath.includes(packageName)) {
+                  version = pkgInfo.version;
+                  break;
+                }
               }
             }
           }

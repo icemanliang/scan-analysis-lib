@@ -5,5 +5,6 @@ module.exports = {
     resolveJsonModule: true,
     moduleResolution: 'node',
   },
-  ignoreMatch: ['src/component/', '__tests__/']
+  ignoreMatch: ['__tests__/', 'typings/', 'types/'],
+  ignoreBailFile: ['/index.ts', '/index.tsx', '/index.js', '/index.jsx']
 }

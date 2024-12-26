@@ -12,6 +12,7 @@ interface Source {
   aliasConfig: {
     [key: string]: string[];
   };
+  subDirs?: string[];
 }
 // 插件配置接口
 interface PluginConfig {
@@ -49,6 +50,7 @@ interface Context {
   aliasConfig: {
     [key: string]: string[];
   };
+  subDirs?: string[];
   scanResults: WorkerResult;
   logger: Logger;
 }

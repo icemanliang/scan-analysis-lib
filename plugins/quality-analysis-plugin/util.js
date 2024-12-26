@@ -136,5 +136,12 @@ exports.extractQualityInfo = (results) => {
     };
   }
 
+  // 提取 dependencyInfo
+  if (results.dependencyInfo) {
+    qualityInfo.dependencyInfo = {
+      dependencyZeroFilesCount: results.dependencyInfo.dependencyZeroFiles.length
+    };
+  }
+
   return qualityInfo;
 };

@@ -4,7 +4,7 @@ const fs = require('fs');
 const jsonc = require('jsonc-parser');
 const defaultConfig = require('./config');
 const moment = require('moment');
-const { transformDetailedImports } = require('./util');
+const { transformDetailedImports, combineExternalDependencies } = require('./util');
 
 class DependencyCheckPlugin {
   constructor(config = {}) {
@@ -15,7 +15,8 @@ class DependencyCheckPlugin {
         ...defaultConfig.compilerOptions,
         ...config.compilerOptions
       },
-      ignoreMatch: config.ignoreMatch || defaultConfig.ignoreMatch
+      ignoreMatch: config.ignoreMatch || defaultConfig.ignoreMatch,
+      ignoreBailFile: config.ignoreBailFile || defaultConfig.ignoreBailFile
     };
     this.packageJson = null;
   }
@@ -35,87 +36,135 @@ class DependencyCheckPlugin {
         context.logger.log('info', 'start dependency check...');
         const startTime = Date.now();
 
-        const compilerOptions = this.getCompilerOptions(context.baseDir);
-        if(context.aliasConfig && Object.keys(context.aliasConfig).length > 0) {
-          // console.log('context.aliasConfig', context.aliasConfig);
-          compilerOptions.paths = {
-            ...compilerOptions.paths,
-            ...context.aliasConfig
+        if(context.subDirs && context.subDirs.length > 0) {
+          // 初始化结果
+          context.scanResults.dependencyInfo = {
+            internal: {},
+            external: {},
+            dependencyZeroFiles: []
           };
+          // 遍历子目录,合并结果
+          for(const subDir of context.subDirs) {
+            const { internalDependencies, externalDependencies, dependencyZeroFiles } = this.dealDependency(context, subDir);
+            context.scanResults.dependencyInfo = { 
+              internal: {
+                ...context.scanResults.dependencyInfo.internal,
+                ...internalDependencies
+              },
+              external: combineExternalDependencies(context.scanResults.dependencyInfo.external, externalDependencies),
+              dependencyZeroFiles: [
+                ...context.scanResults.dependencyInfo.dependencyZeroFiles,
+                ...dependencyZeroFiles
+              ]
+            };
+          }
+        } else {
+          // 单个目录扫描
+          const { internalDependencies, externalDependencies, dependencyZeroFiles } = this.dealDependency(context, '');
+          context.scanResults.dependencyInfo = { internal: internalDependencies, external: externalDependencies, dependencyZeroFiles };
         }
-
-        const project = new Project({
-          compilerOptions: compilerOptions
-        });
-
-        project.addSourceFilesAtPaths(path.join(context.baseDir, context.codeDir, "**/*.{ts,tsx,js,jsx}"));
-
-        // 内部依赖和外部依赖
-        const internalTotalFilePaths = [];  // 参与分析的文件路径汇总
-        const internalDependencies = {};
-        const externalDependencies = {};
         
-        project.getSourceFiles().forEach(sourceFile => {
-          const filePath = sourceFile.getFilePath();
-          internalTotalFilePaths.push(path.relative(context.baseDir, filePath));
-          // this.devLog('filePath', filePath);
-          
-          sourceFile.getImportDeclarations().forEach(importDecl => {
-            const moduleSpecifier = importDecl.getModuleSpecifierValue();
-            const importedFilePath = this.resolveImportPath(context.baseDir, filePath, moduleSpecifier, compilerOptions.paths);
-
-            // this.devLog('importedFilePath', importedFilePath);
-            if (importedFilePath) {
-              if (importedFilePath.includes('node_modules')) {
-                // 外部依赖
-                const packageName = this.getPackageNameFromPath(importedFilePath);
-                if (!externalDependencies[packageName]) {
-                  externalDependencies[packageName] = { count: 0, dependents: [], detailedImports: {} };
-                }
-                externalDependencies[packageName].count += 1;
-                externalDependencies[packageName].dependents.push(path.relative(context.baseDir, filePath));
-
-                const importedNames = importDecl.getNamedImports().map(named => named.getName());
-                const defaultImport = importDecl.getDefaultImport()?.getText();
-                if (defaultImport) importedNames.unshift(defaultImport);
-
-                const formattedFilePath = path.relative(context.baseDir, filePath);
-                if (!externalDependencies[packageName].detailedImports[formattedFilePath]) {
-                  externalDependencies[packageName].detailedImports[formattedFilePath] = [];
-                }
-                externalDependencies[packageName].detailedImports[formattedFilePath].push(...importedNames);
-              } else {
-                // 内部依��
-                const formattedImportedFilePath = path.relative(context.baseDir, importedFilePath);
-                if (!internalDependencies[formattedImportedFilePath]) {
-                  internalDependencies[formattedImportedFilePath] = { count: 0, dependents: [] };
-                }
-                internalDependencies[formattedImportedFilePath].count += 1;
-                internalDependencies[formattedImportedFilePath].dependents.push(path.relative(context.baseDir, filePath));
-              }
-            }
-          });
-        });
-
-        // 在输出结果之前转换数据结构
-        Object.keys(externalDependencies).forEach(packageName => {
-          externalDependencies[packageName].detailedImports = 
-            transformDetailedImports(externalDependencies[packageName].detailedImports);
-        });
-
-        // 计算依赖度为0的文件
-        const dependencyZeroFiles = internalTotalFilePaths
-          .filter(filePath => !internalDependencies[filePath])
-          .filter(filePath => !this.config.ignoreMatch.some(pattern => filePath.includes(pattern))); 
-
-        context.scanResults.dependencyInfo = { internal: internalDependencies, external: externalDependencies, dependencyZeroFiles };
-        context.logger.log('info', `analyzed ${Object.keys(internalDependencies).length} internal files and ${Object.keys(externalDependencies).length} external packages.`);
+        context.logger.log('info', `analyzed ${Object.keys(context.scanResults.dependencyInfo.internal).length} internal files and ${Object.keys(context.scanResults.dependencyInfo.external).length} external packages.`);
         context.logger.log('info', `dependency check completed, time: ${Date.now() - startTime} ms`);
       } catch (error) {
         context.scanResults.dependencyInfo = null;
         context.logger.log('error', `error in plugin ${this.name}: ${error.stack}`);
       }
     });
+  }
+
+  // 处理依赖核心函数
+  dealDependency(context, subDir=''){
+    // 获取编译配置
+    const compilerOptions = this.getCompilerOptions(context.baseDir);
+    compilerOptions.baseUrl = subDir ? './' + context.codeDir + '/' + subDir : './';
+    if(context.aliasConfig && Object.keys(context.aliasConfig).length > 0) {
+      compilerOptions.paths = {
+        ...compilerOptions.paths,
+        ...context.aliasConfig
+      };
+    }
+    // this.devLog('compilerOptions', compilerOptions);
+
+    // 新建扫描项目
+    const project = new Project({
+      compilerOptions: compilerOptions
+    });
+    // 添加扫描文件
+    project.addSourceFilesAtPaths(path.join(context.baseDir, context.codeDir, subDir, "**/*.{ts,tsx,js,jsx}"));
+
+    // 内部依赖和外部依赖
+    const internalTotalFilePaths = [];  // 参与分析的文件路径汇总
+    const internalDependencies = {};
+    const externalDependencies = {};
+    
+    project.getSourceFiles().forEach(sourceFile => {
+      const filePath = sourceFile.getFilePath();
+      internalTotalFilePaths.push(path.relative(context.baseDir, filePath));
+      // this.devLog('filePath', filePath);
+      
+      sourceFile.getImportDeclarations().forEach(importDecl => {
+        const moduleSpecifier = importDecl.getModuleSpecifierValue();
+        const importedFilePath = this.resolveImportPath(subDir ? path.join(context.baseDir, context.codeDir, subDir) : context.baseDir, filePath, moduleSpecifier, compilerOptions.paths);
+
+        // this.devLog('importedFilePath', importedFilePath);
+        if (importedFilePath) {
+          if (importedFilePath.includes('node_modules')) {
+            // 外部依赖
+            const packageName = this.getPackageNameFromPath(importedFilePath);
+            if (!externalDependencies[packageName]) {
+              externalDependencies[packageName] = { count: 0, dependents: [], detailedImports: {} };
+            }
+            externalDependencies[packageName].count += 1;
+            externalDependencies[packageName].dependents.push(path.relative(context.baseDir, filePath));
+
+            const importedNames = importDecl.getNamedImports().map(named => named.getName());
+            const defaultImport = importDecl.getDefaultImport()?.getText();
+            if (defaultImport) importedNames.unshift(defaultImport);
+
+            const formattedFilePath = path.relative(context.baseDir, filePath);
+            if (!externalDependencies[packageName].detailedImports[formattedFilePath]) {
+              externalDependencies[packageName].detailedImports[formattedFilePath] = [];
+            }
+            externalDependencies[packageName].detailedImports[formattedFilePath].push(...importedNames);
+          } else {
+            // 内部依赖
+            const formattedImportedFilePath = path.relative(context.baseDir, importedFilePath);
+            if (!internalDependencies[formattedImportedFilePath]) {
+              internalDependencies[formattedImportedFilePath] = { count: 0, dependents: [] };
+            }
+            internalDependencies[formattedImportedFilePath].count += 1;
+            internalDependencies[formattedImportedFilePath].dependents.push(path.relative(context.baseDir, filePath));
+          }
+        }
+      });
+    });
+
+    // 在输出结果之前转换数据结构
+    Object.keys(externalDependencies).forEach(packageName => {
+      externalDependencies[packageName].detailedImports = 
+        transformDetailedImports(externalDependencies[packageName].detailedImports);
+    });
+
+    // 计算依赖度为0的文件
+    const dependencyZeroFiles = internalTotalFilePaths
+      .filter(filePath => !internalDependencies[filePath])
+      .filter(filePath => !this.config.ignoreMatch.some(pattern => filePath.includes(pattern)))
+      .filter(filePath => {     // 过滤掉依赖度为0的文件，但是是忽略入口类型的文件
+        const internalKeys = Object.keys(internalDependencies);
+        let checkFilePath = filePath;
+        this.config.ignoreBailFile.forEach(file => {
+          if(filePath.endsWith(file)) {
+            checkFilePath = filePath.replace(file, '');
+          }
+        });
+        if(internalKeys.includes(checkFilePath)) {
+          return false;
+        }
+        return true;
+      });
+
+    return { internalDependencies, externalDependencies, dependencyZeroFiles };
   }
 
   // 获取 tsconfig.json 配置

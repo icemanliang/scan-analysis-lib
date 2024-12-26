@@ -26,13 +26,12 @@ class StylelintCheckPlugin {
     const files = await glob(pattern, {
       cwd: context.baseDir,
       absolute: true,
-      ...this.config.glob
     });
 
     if (files.length === 0) {
       return null;
     }
-
+    // this.devLog('files', files.length);
     return stylelint.lint({
       files,
       config
@@ -65,7 +64,7 @@ class StylelintCheckPlugin {
           allResults = allResults.concat(result.results);
           totalFilesCount += result.results.length;
         }
-        this.devLog('allResults', allResults);
+        // this.devLog('allResults', allResults);
 
         // 格式化结果
         const formattedResults = formatResults(allResults, context.baseDir);

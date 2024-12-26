@@ -39,7 +39,7 @@ module.exports = async function checkTsconfig(baseDir, config) {
       result.errors.push(`解析 tsconfig.json 时出错: ${error.message}`);
     }
   } else {
-    result.errors.push('tsconfig.json 文件不存在');
+    console.log('tsconfig.json 文件不存在');
   }
 
   return result;

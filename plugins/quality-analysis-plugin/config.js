@@ -7,8 +7,8 @@ module.exports = {
     eslint: {
       avgIssues: {
         maxScore: 18, // ESLint 错误评分的最高分
-        errorWeight: 0.7, // error 级别问题的权重
-        warningWeight: 0.3, // warning 级别问题的权重
+        errorWeight: 0.65, // error 级别问题的权重
+        warningWeight: 0.35, // warning 级别问题的权重
         maxErrorsPerFile: 3, // 单文件允许的最大 error 数，超过后得0分
         maxWarningsPerFile: 3 // 单文件允许的最大 warning 数，超过后得0分
       },
@@ -87,7 +87,7 @@ module.exports = {
     },
     codeQuality: {
       generatorFunctions: {
-        maxScore: 3 // 生成器函数使用评分的最高分
+        maxScore: 1 // 生成器函数使用评分的最高分
       },
       classComponents: {
         maxScore: 3 // 类组件使用评分的最高分
@@ -110,12 +110,12 @@ module.exports = {
     apis: {
       bom: {
         maxScore: 3,
-        threshold: 0.1,        // 每个文件平均允许的 BOM API 调用次数阈值
+        threshold: 0.05,        // 每个文件平均允许的 BOM API 调用次数阈值
         penaltyFactor: 0.5     // 超过阈值后的惩罚系数
       },
       dom: {
         maxScore: 3,
-        threshold: 0.1,        // 每个文件平均允许的 DOM API 调用次数阈值
+        threshold: 0.07,        // 每个文件平均允许的 DOM API 调用次数阈值
         penaltyFactor: 0.5     // 超过阈值后的惩罚系数
       }
     },

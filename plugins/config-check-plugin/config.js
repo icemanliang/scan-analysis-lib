@@ -12,7 +12,7 @@ module.exports = {
     packageJson: true,
     license: false,
     ignoreFiles: false,
-    browserslist: true,
+    browserslist: false,
   },
 
   // commitlint 相关配置
@@ -162,7 +162,7 @@ module.exports = {
 
   // npmrc 相关配置
   npmrc: {
-    registryDomain: 'https://npmjs.iceman.cn'
+    registryDomain: 'https://registry.npmjs.org'  // 默认配置npm官方源，可配置私有源
   },
 
   // node 版本相关配置

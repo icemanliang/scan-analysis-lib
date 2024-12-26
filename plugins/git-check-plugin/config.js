@@ -21,7 +21,8 @@ module.exports = {
       '404.png',
       '404.jpg',
       '404.jpeg',
-      '404.svg'
+      '404.svg',
+      'README.md'
     ]
   },
 
@@ -32,7 +33,7 @@ module.exports = {
     // 获取最近的 commit 数量
     recentCommitsCount: 10,
     // 必需的 husky hooks
-    requiredHooks: ['commit-msg', 'pre-commit', 'pre-push'],
+    requiredHooks: ['commit-msg', 'pre-commit'],
     // 必需的 gitignore 项
     requiredIgnores: [
       'logs',
