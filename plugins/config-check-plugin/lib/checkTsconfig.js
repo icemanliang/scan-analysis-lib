@@ -2,8 +2,8 @@ const fs = require('fs');
 const path = require('path');
 const jsonc = require('jsonc-parser');
 
-module.exports = async function checkTsconfig(baseDir, config) {
-  const filePath = path.join(baseDir, 'tsconfig.json');
+module.exports = async function checkTsconfig(context, config) {
+  const filePath = path.join(context.baseDir, 'tsconfig.json');
   const result = { exists: false, isValid: false, errors: [] };
 
   if (fs.existsSync(filePath)) {
@@ -39,7 +39,7 @@ module.exports = async function checkTsconfig(baseDir, config) {
       result.errors.push(`解析 tsconfig.json 时出错: ${error.message}`);
     }
   } else {
-    console.log('tsconfig.json 文件不存在');
+    context.logger.log('warn', 'tsconfig.json 文件不存在');
   }
 
   return result;

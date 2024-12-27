@@ -14,6 +14,7 @@ const SCORE_DIMENSIONS = {
   eslintAvgIssues: {
     maxScore: scores.eslint.avgIssues.maxScore,
     calculate: (qualityInfo) => {
+      if (!qualityInfo.eslintInfo) return 0;
       if (!qualityInfo.eslintInfo?.totalFilesCount) return 0;
       const avgErrors = qualityInfo.eslintInfo.errorCount / qualityInfo.eslintInfo.totalFilesCount;
       const avgWarnings = qualityInfo.eslintInfo.warningCount / qualityInfo.eslintInfo.totalFilesCount;
@@ -30,6 +31,7 @@ const SCORE_DIMENSIONS = {
   eslintFileRatio: {
     maxScore: scores.eslint.fileRatio.maxScore,
     calculate: (qualityInfo) => {
+      if (!qualityInfo.eslintInfo) return 0;
       if (!qualityInfo.eslintInfo?.fileListLength) return scores.eslint.fileRatio.maxScore;
       const ratio = qualityInfo.eslintInfo.fileListLength / qualityInfo.eslintInfo.totalFilesCount;
       return Number(Math.max(0, scores.eslint.fileRatio.maxScore * (1 - ratio)).toFixed(2));
@@ -41,6 +43,7 @@ const SCORE_DIMENSIONS = {
   stylelintAvgErrors: {
     maxScore: scores.stylelint.avgErrors.maxScore,
     calculate: (qualityInfo) => {
+      if (!qualityInfo.stylelintInfo) return 0;
       if (!qualityInfo.stylelintInfo?.totalFilesCount) return scores.stylelint.avgErrors.maxScore;
       const avgErrors = qualityInfo.stylelintInfo.errorCount / qualityInfo.stylelintInfo.totalFilesCount;
       return Number(Math.max(0, scores.stylelint.avgErrors.maxScore * 
@@ -53,6 +56,7 @@ const SCORE_DIMENSIONS = {
   stylelintFileRatio: {
     maxScore: scores.stylelint.fileRatio.maxScore,
     calculate: (qualityInfo) => {
+      if (!qualityInfo.stylelintInfo) return 0;
       if (!qualityInfo.stylelintInfo?.totalFilesCount) return scores.stylelint.fileRatio.maxScore;
       const ratio = qualityInfo.stylelintInfo.fileListLength / qualityInfo.stylelintInfo.totalFilesCount;
       return Number(Math.max(0, scores.stylelint.fileRatio.maxScore * (1 - ratio)).toFixed(2));
@@ -64,6 +68,7 @@ const SCORE_DIMENSIONS = {
   maxDuplicateLines: {
     maxScore: scores.duplication.maxLines.maxScore,
     calculate: (qualityInfo) => {
+      if (!qualityInfo.redundancyInfo) return 0;
       const maxLines = qualityInfo.redundancyInfo?.maxDuplicatesLine || 0;
       if (maxLines <= scores.duplication.maxLines.threshold) return scores.duplication.maxLines.maxScore;
       return Number(Math.max(0, scores.duplication.maxLines.maxScore * 
@@ -76,6 +81,7 @@ const SCORE_DIMENSIONS = {
   duplicateFilesRatio: {
     maxScore: scores.duplication.filesRatio.maxScore,
     calculate: (qualityInfo) => {
+      if (!qualityInfo.redundancyInfo) return 0;
       if (!qualityInfo.redundancyInfo?.checkFilesCount) return 0;
       const ratio = qualityInfo.redundancyInfo.files / qualityInfo.redundancyInfo.checkFilesCount;
       return Number(Math.max(0, scores.duplication.filesRatio.maxScore * (1 - ratio)).toFixed(2));
@@ -87,6 +93,7 @@ const SCORE_DIMENSIONS = {
   duplicateItemsRatio: {
     maxScore: scores.duplication.itemsRatio.maxScore,
     calculate: (qualityInfo) => {
+      if (!qualityInfo.redundancyInfo) return 0;
       if (!qualityInfo.redundancyInfo?.checkFilesCount) return 0;
       const ratio = qualityInfo.redundancyInfo.duplicatesCount / qualityInfo.redundancyInfo.checkFilesCount;
       return Number(Math.max(0, scores.duplication.itemsRatio.maxScore * (1 - ratio)).toFixed(2));
@@ -101,6 +108,7 @@ const SCORE_DIMENSIONS = {
   nodeVersion: {
     maxScore: scores.node.version.maxScore,
     calculate: (qualityInfo) => {
+      if (!qualityInfo.configInfo) return 0;
       if (!qualityInfo.configInfo?.nodeVersion) return 0;
       const version = parseInt(qualityInfo.configInfo?.nodeVersion);
       if (version >= scores.node.version.recommended) return scores.node.version.maxScore;
@@ -113,7 +121,7 @@ const SCORE_DIMENSIONS = {
   // 计算逻辑：提交信息不规范得 0 分，规范得满分
   commitMessage: {
     maxScore: scores.git.commitMessage.maxScore,
-    calculate: (qualityInfo) => qualityInfo.gitInfo?.isCommitsInvaild ? 0 : scores.git.commitMessage.maxScore
+    calculate: (qualityInfo) => !qualityInfo.gitInfo || qualityInfo.gitInfo?.isCommitsInvaild ? 0 : scores.git.commitMessage.maxScore
   },
   
   // Husky 检查配置评分
@@ -128,6 +136,7 @@ const SCORE_DIMENSIONS = {
   directoryDepth: {
     maxScore: scores.directory.depth.maxScore,
     calculate: (qualityInfo) => {
+      if (!qualityInfo.gitInfo) return 0;
       if (!qualityInfo.gitInfo?.maxDirectoryDepth) return scores.directory.depth.maxScore;
       const depth = qualityInfo.gitInfo?.maxDirectoryDepth || 0;
       return depth <= scores.directory.depth.maxDepth ? scores.directory.depth.maxScore : 0;
@@ -139,6 +148,7 @@ const SCORE_DIMENSIONS = {
   deepDirectories: {
     maxScore: scores.directory.deep.maxScore,
     calculate: (qualityInfo) => {
+      if (!qualityInfo.gitInfo) return 0;
       if (!qualityInfo.gitInfo?.deepDirectoriesCount) return scores.directory.deep.maxScore;
       const count = qualityInfo.gitInfo?.deepDirectoriesCount || 0;
       return Number(Math.max(0, scores.directory.deep.maxScore * 
@@ -179,6 +189,7 @@ const SCORE_DIMENSIONS = {
   configErrors: {
     maxScore: scores.config.errors.maxScore,
     calculate: (qualityInfo) => {
+      if (!qualityInfo.configInfo) return 0;
       if (!qualityInfo.configInfo?.configInfoInvalidErrorCount) return scores.config.errors.maxScore;
       const errors = qualityInfo.configInfo?.configInfoInvalidErrorCount || 0;
       return Number(Math.max(0, scores.config.errors.maxScore * 
@@ -200,6 +211,7 @@ const SCORE_DIMENSIONS = {
   generatorFunctions: {
     maxScore: scores.codeQuality.generatorFunctions.maxScore,
     calculate: (qualityInfo) => {
+      if (!qualityInfo.countInfo) return 0;
       if (!qualityInfo.countInfo?.generatorFunctionsCount) return scores.codeQuality.generatorFunctions.maxScore;
       const ratio = qualityInfo.countInfo.generatorFunctionsCount / qualityInfo.countInfo.totalFilesCount;
       return Number(Math.max(0, scores.codeQuality.generatorFunctions.maxScore * (1 - ratio)).toFixed(2));
@@ -211,6 +223,7 @@ const SCORE_DIMENSIONS = {
   classComponents: {
     maxScore: scores.codeQuality.classComponents.maxScore,
     calculate: (qualityInfo) => {
+      if (!qualityInfo.countInfo) return 0;
       if (!qualityInfo.countInfo?.classComponentsCount) return scores.codeQuality.classComponents.maxScore;
       const ratio = qualityInfo.countInfo.classComponentsCount / qualityInfo.countInfo.totalFilesCount;
       return Number(Math.max(0, scores.codeQuality.classComponents.maxScore * (1 - ratio)).toFixed(2));
@@ -233,6 +246,7 @@ const SCORE_DIMENSIONS = {
   missingTypes: {
     maxScore: scores.codeQuality.missingTypes.maxScore,
     calculate: (qualityInfo) => {
+      if (!qualityInfo.countInfo) return 0;
       if (!qualityInfo.countInfo?.missingTypesFunctionsCount) return scores.codeQuality.missingTypes.maxScore;
       const ratio = qualityInfo.countInfo.missingTypesFunctionsCount / qualityInfo.countInfo.totalFunctionsCount;
       return Number(Math.max(0, scores.codeQuality.missingTypes.maxScore * (1 - ratio)).toFixed(2));
@@ -247,6 +261,7 @@ const SCORE_DIMENSIONS = {
   typeScriptUsage: {
     maxScore: scores.codeQuality.typeScriptUsage.maxScore,
     calculate: (qualityInfo) => {
+      if (!qualityInfo.gitInfo) return 0;
       const tsFiles = qualityInfo.gitInfo?.tsAndTsxFilesCount || 0;
       const jsFiles = qualityInfo.gitInfo?.jsAndJsxFilesCount || 0;
       
@@ -263,6 +278,7 @@ const SCORE_DIMENSIONS = {
   invalidNames: {
     maxScore: scores.codeQuality.invalidNames.maxScore,
     calculate: (qualityInfo) => {
+      if (!qualityInfo.gitInfo) return 0;
       if (!qualityInfo.gitInfo?.totalFiles) return scores.codeQuality.invalidNames.maxScore;
       
       const invalidRatio = ((qualityInfo.gitInfo?.fileNamingIssuesCount || 0) + 
@@ -282,6 +298,7 @@ const SCORE_DIMENSIONS = {
   bomApiAvgCount: {
     maxScore: scores.apis.bom.maxScore,
     calculate: (qualityInfo) => {
+      if (!qualityInfo.countInfo) return 0;
       if (!qualityInfo.countInfo?.totalFilesCount) return scores.apis.bom.maxScore;
       const avgCalls = qualityInfo.countInfo.bomApiTotalCount / qualityInfo.countInfo.totalFilesCount;
       
@@ -297,6 +314,7 @@ const SCORE_DIMENSIONS = {
   domApiAvgCount: {
     maxScore: scores.apis.dom.maxScore,
     calculate: (qualityInfo) => {
+      if (!qualityInfo.countInfo) return 0;
       if (!qualityInfo.countInfo?.totalFilesCount) return scores.apis.dom.maxScore;
       const avgCalls = qualityInfo.countInfo.domApiTotalCount / qualityInfo.countInfo.totalFilesCount;
       
@@ -311,7 +329,7 @@ const SCORE_DIMENSIONS = {
   // 计算逻辑：存在相似包得 0 分，否则得满分
   similarPackages: {
     maxScore: scores.packages.similar.maxScore,
-    calculate: (qualityInfo) => qualityInfo.packageInfo?.similarPackagesCount > 0 ? 0 : scores.packages.similar.maxScore
+    calculate: (qualityInfo) => !qualityInfo.packageInfo || qualityInfo.packageInfo?.similarPackagesCount > 0 ? 0 : scores.packages.similar.maxScore
   },
 
   // 风险包评分
@@ -319,6 +337,7 @@ const SCORE_DIMENSIONS = {
   riskPackages: {
     maxScore: scores.packages.risk.maxScore,
     calculate: (qualityInfo) => {
+      if (!qualityInfo.packageInfo) return 0;
       const riskCount = qualityInfo.packageInfo?.riskPackagesCount || 0;
       if (riskCount <= scores.packages.risk.threshold) return scores.packages.risk.maxScore;
       
@@ -331,7 +350,7 @@ const SCORE_DIMENSIONS = {
   // 计算逻辑：存在可更新包得0分，否则得满分
   updatePackages: {
     maxScore: scores.packages.update.maxScore,
-    calculate: (qualityInfo) => qualityInfo.packageInfo?.updatePackagesCount > 0 ? 0 : scores.packages.update.maxScore
+    calculate: (qualityInfo) => !qualityInfo.packageInfo || qualityInfo.packageInfo?.updatePackagesCount > 0 ? 0 : scores.packages.update.maxScore
   }
 };
 

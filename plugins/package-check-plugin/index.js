@@ -111,7 +111,7 @@ class PackageCheckPlugin {
       };
     }
 
-    this.devLog('analyzeDependencies', result);
+    // this.devLog('analyzeDependencies', result);
     return result;
   }
 
@@ -141,18 +141,19 @@ class PackageCheckPlugin {
           const lockFileContent = yaml.load(content);
           // console.log('lockFileContent =========>', Object.keys(lockFileContent.importers));
 
-          // pnpm-lock.yaml v6 格式
+          // pnpm-lock.yaml v9 格式
           if (lockFileContent.importers) {
             if(subDir){
               for (const [pkgPath, pkgInfo] of Object.entries(lockFileContent.importers['packages/' + subDir].dependencies)) {
-                // console.log('pkgPath =========>', packageName);
+                // console.log('pkgPath v9 has subDir ==========>', pkgPath);
                 if (pkgPath.includes(packageName)) {
                   version = pkgInfo.version;
                   break;
                 }
               }
             }else{
-              for (const [pkgPath, pkgInfo] of Object.entries(lockFileContent.importers.dependencies)) {
+              for (const [pkgPath, pkgInfo] of Object.entries(lockFileContent.importers['.'].dependencies)) {
+                // console.log('pkgPath v9 no subDir ==========>', pkgPath);
                 if (pkgPath.includes(packageName)) {
                   version = pkgInfo.version;
                   break;
@@ -160,9 +161,15 @@ class PackageCheckPlugin {
               }
             }
           }
-          // 旧版格式
-          if (!version) {
-            version = lockFileContent.dependencies?.[packageName]?.version;
+          // pnpm-lock.yaml 旧版格式
+          if (lockFileContent.dependencies) {
+            for (const [pkgPath, pkgInfo] of Object.entries(lockFileContent.dependencies)) {
+              // console.log('pkgPath v6 ==========>', pkgPath);
+              if (pkgPath.includes(packageName)) {
+                version = pkgInfo.version;
+                break;
+              }
+            }
           }
           break;
         }
@@ -192,7 +199,7 @@ class PackageCheckPlugin {
       
       return null;
     } catch (error) {
-      console.error(`error reading lock file for ${packageName}:`, error.message);
+      this.devLog('error reading lock file for ${packageName}:', error.message);
       return null;
     }
   }
@@ -255,7 +262,7 @@ class PackageCheckPlugin {
         installedSimilarPackages.push(installed);
       }
     }
-    this.devLog('similarPackages', installedSimilarPackages);
+    // this.devLog('similarPackages', installedSimilarPackages);
     return installedSimilarPackages;
   }
 
@@ -266,7 +273,7 @@ class PackageCheckPlugin {
       const timeout = this.config.riskThreshold.apiTimeout;
       const response = await axios.get(`${apiUrl}${packageName}`, { timeout: timeout });
 
-      this.devLog('fetchNpmPackageInfo', response.data);
+      // this.devLog('fetchNpmPackageInfo', response.data);
       return response.data;
     } catch (error) {
       console.error(`Error fetching npm info for ${packageName}:`, error.message);
@@ -281,7 +288,7 @@ class PackageCheckPlugin {
     const monthDiff = (now.getFullYear() - lastUpdate.getFullYear()) * 12 + 
                       (now.getMonth() - lastUpdate.getMonth());
 
-    this.devLog('getMonthsSinceLastUpdate', monthDiff);
+    // this.devLog('getMonthsSinceLastUpdate', monthDiff);
     return monthDiff;
   }
 
@@ -292,7 +299,7 @@ class PackageCheckPlugin {
       const timeout = this.config.riskThreshold.apiTimeout;
       const response = await axios.get(`${apiUrl}${packageName}`, { timeout: timeout });
       
-      this.devLog('getMonthlyDownloads', response.data.downloads);
+      // this.devLog('getMonthlyDownloads', response.data.downloads);
       return response.data.downloads;
     } catch (error) {
       console.error(`Error fetching download stats for ${packageName}:`, error.message);
@@ -321,7 +328,7 @@ class PackageCheckPlugin {
     } else if (!['MIT', 'ISC', 'Apache-2.0', 'BSD-3-Clause'].includes(license)) {
       reasons.push(`使用了非主流开源协议(${license})`);
     }
-    this.devLog('riskReason', reasons);
+    // this.devLog('riskReason', reasons);
     return reasons;
   }
 
@@ -357,7 +364,7 @@ class PackageCheckPlugin {
         }
       }
     }
-    this.devLog('versionUpgrades', upgrades);
+    // this.devLog('versionUpgrades', upgrades);
     return upgrades;
   }
 

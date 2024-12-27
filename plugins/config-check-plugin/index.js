@@ -62,7 +62,7 @@ class ConfigCheckPlugin {
         // tsconfig 检查
         if (checks.tsconfig) {
           const checkTsconfig = require('./lib/checkTsconfig');
-          results.tsconfig = await checkTsconfig(context.baseDir, this.config.tsconfig);
+          results.tsconfig = await checkTsconfig(context, this.config.tsconfig);
           // this.devLog('tsconfig', results.tsconfig);
         }
         // node 版本检查

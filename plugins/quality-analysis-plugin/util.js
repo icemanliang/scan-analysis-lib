@@ -52,6 +52,14 @@ exports.extractQualityInfo = (results) => {
       missingTypesFunctionsCount: results.countInfo.functionStats?.missingTypes || 0,
       tFunctionTotalCount: results.countInfo.tFunctionCheck?.total || 0,
       tFunctionIssuesCount: results.countInfo.tFunctionCheck?.issuesCount || 0,
+      domApiManifest: Object.entries(results.countInfo.domApis || {}).reduce((acc, [key, value]) => {
+        acc[key] = value?.length || 0;
+        return acc;
+      }, {}),
+      bomApiManifest: Object.entries(results.countInfo.bomApis || {}).reduce((acc, [key, value]) => {
+        acc[key] = value?.length || 0;
+        return acc;
+      }, {}),
     };
   }
 
