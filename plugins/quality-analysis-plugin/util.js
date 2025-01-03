@@ -93,7 +93,7 @@ exports.extractQualityInfo = (results) => {
       // node 版本
       nodeVersion: results.configInfo.nodeVersion?.version || '',
       // 配置信息总数
-      configInfoCount: Object.keys(results.configInfo).length,
+      configInfoCount: Object.keys(results.configInfo).length - (results.configInfo.tsconfig?.exists ? 0 : 1),
       // 配置信息有效总数
       configInfoValidCount: Object.values(results.configInfo)
         .filter(config => config.exists && config?.isValid === true).length,

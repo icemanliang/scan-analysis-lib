@@ -74,7 +74,8 @@ module.exports = {
     'no-eval': 'error',
 
     // 文件名规则
-    "unicorn/filename-case": ["error", { "case": "kebabCase" }]
+    "unicorn/filename-case": ["error", { "case": "kebabCase" }],
+    "unicorn/new-for-builtins": "error"
   },
 
   // TypeScript 特定规则

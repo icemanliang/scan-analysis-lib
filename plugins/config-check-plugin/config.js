@@ -39,7 +39,8 @@ module.exports = {
       tabWidth: 2,
       trailingComma: 'all',
       printWidth: 100
-    }
+    },
+    customConfig: '@iceman/prettier-config'
   },
 
   // eslint 相关配置
@@ -51,23 +52,12 @@ module.exports = {
       '.eslintrc.yml',
       '.eslintrc'
     ], 
-    customConfig: '@iceman/eslint-config',
-    parser: {
-      typescript: '@typescript-eslint/parser',
-      javascript: '@babel/eslint-parser'
-    },
-    validReactConfigs: [
-      ['airbnb', 'airbnb/hooks'],
-      ['eslint:recommended', 'plugin:react/recommended', 'plugin:react-hooks/recommended']
-    ],
-    validVueConfigs: [
-      'plugin:vue/recommended',
-      'eslint:recommended'
-    ],
-    dependencies: {
-      react: ['react', 'react-dom'],
-      vue: ['vue']
-    }
+    validConfigs: [
+      ['@iceman/eslint-config'],                            // 自定义配置
+      ['eslint:recommended', 'plugin:react/recommended'],   // react 项目
+      ['eslint:recommended', 'plugin:vue/recommended'],     // vue 项目
+      ['airbnb', 'airbnb/hooks']                            // react 项目
+    ]
   },
 
   // editorconfig 相关配置
@@ -140,7 +130,18 @@ module.exports = {
       '*.{js,jsx}': ['eslint --fix'],
       '*.{ts,tsx}': ['eslint --fix'],
       '*.{js,jsx,vue}': ['eslint --fix'],
-      '*.{ts,tsx,vue}': ['eslint --fix']
+      '*.{ts,tsx,vue}': ['eslint --fix'],
+      '*.{js,jsx,ts,tsx,vue}': ['eslint --fix'],
+      "src/**/*.{js,jsx}": ['eslint --fix'],
+      "src/**/*.{ts,tsx}": ['eslint --fix'],
+      "src/**/*.{js,jsx,vue}": ['eslint --fix'],
+      "src/**/*.{ts,tsx,vue}": ['eslint --fix'],
+      "src/**/*.{js,jsx,ts,tsx,vue}": ['eslint --fix'],
+      "packages/**/*.{js,jsx}": ['eslint --fix'],
+      "packages/**/*.{ts,tsx}": ['eslint --fix'],
+      "packages/**/*.{js,jsx,vue}": ['eslint --fix'],
+      "packages/**/*.{ts,tsx,vue}": ['eslint --fix'],
+      "packages/**/*.{js,jsx,ts,tsx,vue}": ['eslint --fix']
     },
     npmPackageFields: {
       version: '必须是有效的 semver 版本',
@@ -167,7 +168,8 @@ module.exports = {
 
   // node 版本相关配置
   nodeVersion: {
-    versionPattern: /^\d+\.\d+\.\d+$/
+    versionPattern: /^\d+\.\d+\.\d+$/,
+    whitelist: ['20.11.1', '20.10.0', '18.19.1', '18.17.0']
   },
 
   // tsconfig 相关配置

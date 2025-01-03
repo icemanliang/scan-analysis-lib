@@ -23,6 +23,10 @@ module.exports = async function checkNodeVersion(baseDir, config) {
         result.errors.push('Node 版本号不合法');
       }
 
+      if (!config.whitelist.includes(version)) {
+        result.errors.push('Node 版本号不在白名单中');
+      }
+
       result.isValid = result.errors.length === 0;
       result.version = version;
     } catch (error) {

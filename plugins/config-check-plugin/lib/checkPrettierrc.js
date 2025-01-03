@@ -23,7 +23,17 @@ module.exports = async function checkPrettierrc(baseDir, config) {
           key => prettierConfig[key] === config.expectedConfig[key]
         );
       } catch (error) {
-        result.error = error.message;
+        if (error.message.includes('Cannot find module') && file.endsWith('.js')) {
+          // 检查是否是自定义配置
+          const content = fs.readFileSync(filePath, 'utf8');
+          if(content.includes(config.customConfig)) {
+            result.isValid = true;
+          }else{
+            result.error = error.message;
+          }
+        } else {
+          result.error = error.message;
+        }
       }
       break;
     }

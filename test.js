@@ -73,9 +73,7 @@ const config = {
     },
     {
       name: 'dependency-check-plugin',
-      config: {
-        ignoreMatch: ['__tests__/']
-      }
+      config: {}
     },
     {
       name: 'build-check-plugin',

@@ -22,6 +22,7 @@ module.exports = async function checkEslintrc(baseDir, config) {
     }
   }
 
+  // 检查配置文件是否存在
   if (!result.exists || !eslintConfig) {
     result.errors.push('未找到或无法解析 ESLint 配置文件');
     return result;
@@ -40,41 +41,12 @@ module.exports = async function checkEslintrc(baseDir, config) {
     return result;
   }
 
-  // 检查 parser
-  const tsConfigPath = path.join(baseDir, 'tsconfig.json');
-  const isTypeScript = fs.existsSync(tsConfigPath);
-  const expectedParser = isTypeScript ? config.parser.typescript : config.parser.javascript;
-
-  if (eslintConfig.parser !== expectedParser) {
-    result.errors.push(`parser 应该为 "${expectedParser}"`);
-  }
-
-  // 检查项目类型并验证相应的配置
-  const packageJson = await loadPackageJson(baseDir);
-  if (!packageJson) {
-    result.errors.push('无法读取或解析 package.json');
-    return result;
-  }
-
-  const { dependencies = {} } = packageJson;
-  const isReact = config.dependencies.react.some(dep => dependencies[dep]);
-  const isVue = config.dependencies.vue.some(dep => dependencies[dep]);
-
-  // 检查配置有效性
-  if (!eslintConfig.extends.includes(config.customConfig)) {
-    if (isReact) {
-      const hasValidConfig = config.validReactConfigs.some(conf => 
-        conf.every(item => eslintConfig.extends.includes(item))
-      );
-      if (!hasValidConfig) {
-        result.errors.push(`React 项目必须包含以下配置组合之一: ${JSON.stringify(config.validReactConfigs)}`);
-      }
-    } else if (isVue) {
-      const hasValidConfig = config.validVueConfigs.every(conf => eslintConfig.extends.includes(conf));
-      if (!hasValidConfig) {
-        result.errors.push(`Vue 项目必须包含以下配置: ${config.validVueConfigs.join(', ')}`);
-      }
-    }
+  // 检查配置文件是否包含有效的配置
+  const hasValidConfig = config.validConfigs.some(conf => 
+    conf.every(item => eslintConfig.extends.includes(item))
+  );
+  if (!hasValidConfig) {
+    result.errors.push(`配置必须包含以下组合之一: ${JSON.stringify(config.validConfigs)}`);
   }
 
   // 根据 errors 数组判断 isValid
@@ -125,14 +97,5 @@ async function loadConfig(filePath) {
     return jsonc.parse(content);
   } catch (error) {
     throw new Error(`JSON 解析错误: ${error.message}`);
-  }
-}
-
-async function loadPackageJson(baseDir) {
-  try {
-    const content = fs.readFileSync(path.join(baseDir, 'package.json'), 'utf8');
-    return JSON.parse(content);
-  } catch {
-    return null;
   }
 }

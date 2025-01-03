@@ -27,15 +27,18 @@ module.exports = {
     },
     duplication: {
       maxLines: {
-        maxScore: 5, // 代码重复行数评分的最高分
-        threshold: 30, // 允许的最大重复行数阈值
-        penaltyFactor: 100 // 超过阈值后的惩罚系数，越大惩罚越小
+        maxScore: 4, // 代码重复行数评分的最高分
+        upperThreshold: 300, // 允许的最大重复行数阈值
+        lowerThreshold: 80, // 允许的最小重复行数阈值
+        exponent: 1 // 指数函数的指数，控制曲线的陡峭程度
       },
       filesRatio: {
         maxScore: 3 // 重复文件占比评分的最高分
       },
       itemsRatio: {
-        maxScore: 2 // 重复项占比评分的最高分
+        maxScore: 3, // 重复项占比评分的最高分
+        threshold: 0.01, // 允许的最大重复项占比阈值
+        penaltyFactor: 0.4 // 超过阈值后的惩罚系数，越大惩罚越小
       }
     },
     directory: {
@@ -65,8 +68,7 @@ module.exports = {
     },
     config: {
       errors: {
-        maxScore: 10, // 配置错误评分的最高分
-        maxErrors: 20 // 允许的最大配置错误数，超过后按比例扣分
+        maxScore: 8, // 配置错误评分的最高分
       },
       readme: {
         maxScore: 2, // readme 配置评分的最高分
@@ -93,7 +95,7 @@ module.exports = {
         maxScore: 3 // 类组件使用评分的最高分
       },
       tFunctionCalls: {
-        maxScore: 3 // t 函数调用评分的最高分
+        maxScore: 4 // t 函数调用评分的最高分
       },
       missingTypes: {
         maxScore: 3 // 类型完整性评分的最高分
@@ -114,7 +116,7 @@ module.exports = {
         penaltyFactor: 0.5     // 超过阈值后的惩罚系数
       },
       dom: {
-        maxScore: 3,
+        maxScore: 4,
         threshold: 0.07,        // 每个文件平均允许的 DOM API 调用次数阈值
         penaltyFactor: 0.5     // 超过阈值后的惩罚系数
       }

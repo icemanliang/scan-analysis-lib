@@ -70,9 +70,23 @@ const SCORE_DIMENSIONS = {
     calculate: (qualityInfo) => {
       if (!qualityInfo.redundancyInfo) return 0;
       const maxLines = qualityInfo.redundancyInfo?.maxDuplicatesLine || 0;
-      if (maxLines <= scores.duplication.maxLines.threshold) return scores.duplication.maxLines.maxScore;
-      return Number(Math.max(0, scores.duplication.maxLines.maxScore * 
-        (1 - (maxLines - scores.duplication.maxLines.threshold) / scores.duplication.maxLines.penaltyFactor)).toFixed(2));
+      // 超过上限阈值，得0分
+      if (maxLines >= scores.duplication.maxLines.upperThreshold) {
+        return 0;
+      }
+      // 低于下限阈值，得满分
+      if (maxLines <= scores.duplication.maxLines.lowerThreshold) {
+        return scores.duplication.maxLines.maxScore;
+      }
+      // 在阈值区间内，使用指数函数计算得分
+      const range = scores.duplication.maxLines.upperThreshold - scores.duplication.maxLines.lowerThreshold;
+      const position = maxLines - scores.duplication.maxLines.lowerThreshold;
+      const ratio = position / range;
+      
+      // 使用指数函数：score = maxScore * (1 - ratio^exponent)
+      // exponent 控制曲线的陡峭程度，值越小曲线越陡
+      return Number((scores.duplication.maxLines.maxScore * 
+        (1 - Math.pow(ratio, scores.duplication.maxLines.exponent))).toFixed(2));
     }
   },
   
@@ -95,8 +109,16 @@ const SCORE_DIMENSIONS = {
     calculate: (qualityInfo) => {
       if (!qualityInfo.redundancyInfo) return 0;
       if (!qualityInfo.redundancyInfo?.checkFilesCount) return 0;
-      const ratio = qualityInfo.redundancyInfo.duplicatesCount / qualityInfo.redundancyInfo.checkFilesCount;
-      return Number(Math.max(0, scores.duplication.itemsRatio.maxScore * (1 - ratio)).toFixed(2));
+      
+      const avgDuplicates = qualityInfo.redundancyInfo.duplicatesCount / qualityInfo.redundancyInfo.checkFilesCount;
+      // 如果平均重复项数量低于阈值，给满分
+      if (avgDuplicates <= scores.duplication.itemsRatio.threshold) {
+        return scores.duplication.itemsRatio.maxScore;
+      }
+      // 超过阈值后，按惩罚系数计算扣分
+      return Number(Math.max(0, scores.duplication.itemsRatio.maxScore * 
+        (1 - (avgDuplicates - scores.duplication.itemsRatio.threshold) / 
+        scores.duplication.itemsRatio.penaltyFactor)).toFixed(2));
     }
   },
   
@@ -185,15 +207,14 @@ const SCORE_DIMENSIONS = {
   },  
   
   // 配置错误评分
-  // 计算逻辑：配置错误数量占阈值的比例越低得分越高
+  // 计算逻辑：配置合格数量占总配置数量的比例越高，得分越高
   configErrors: {
     maxScore: scores.config.errors.maxScore,
     calculate: (qualityInfo) => {
       if (!qualityInfo.configInfo) return 0;
-      if (!qualityInfo.configInfo?.configInfoInvalidErrorCount) return scores.config.errors.maxScore;
-      const errors = qualityInfo.configInfo?.configInfoInvalidErrorCount || 0;
+      if (qualityInfo.configInfo?.configInfoValidCount === qualityInfo.configInfo?.configInfoCount) return scores.config.errors.maxScore;
       return Number(Math.max(0, scores.config.errors.maxScore * 
-        (1 - errors / scores.config.errors.maxErrors)).toFixed(2));
+        (qualityInfo.configInfo?.configInfoValidCount / qualityInfo.configInfo?.configInfoCount).toFixed(2)));
     }
   },
   
@@ -235,6 +256,7 @@ const SCORE_DIMENSIONS = {
   tFunctionCalls: {
     maxScore: scores.codeQuality.tFunctionCalls.maxScore,
     calculate: (qualityInfo) => {
+      if (!qualityInfo.countInfo) return 0;
       if (!qualityInfo.countInfo?.tFunctionTotalCount) return scores.codeQuality.tFunctionCalls.maxScore;
       const ratio = qualityInfo.countInfo.tFunctionIssuesCount / qualityInfo.countInfo.tFunctionTotalCount;
       return Number(Math.max(0, scores.codeQuality.tFunctionCalls.maxScore * (1 - ratio)).toFixed(2));
