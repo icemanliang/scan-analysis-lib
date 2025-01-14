@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 
 module.exports = async function checkPrettierrc(baseDir, config) {
-  const result = { exists: false, isValid: false, filePath: null };
+  const result = { exists: false, isValid: false, filePath: null, errors: [] };
 
   for (const file of config.possibleFiles) {
     const filePath = path.join(baseDir, file);
@@ -19,25 +19,32 @@ module.exports = async function checkPrettierrc(baseDir, config) {
         }
 
         // 检查配置是否与预期配置一致
-        result.isValid = Object.keys(config.expectedConfig).every(
-          key => prettierConfig[key] === config.expectedConfig[key]
+        const invalidKeys = Object.keys(config.expectedConfig).filter(
+          key => prettierConfig[key] !== config.expectedConfig[key]
         );
+
+        if (invalidKeys.length > 0) {
+          result.errors.push(`以下配置项不符合预期: ${invalidKeys.join(', ')}`);
+        }
       } catch (error) {
         if (error.message.includes('Cannot find module') && file.endsWith('.js')) {
           // 检查是否是自定义配置
           const content = fs.readFileSync(filePath, 'utf8');
-          if(content.includes(config.customConfig)) {
-            result.isValid = true;
-          }else{
-            result.error = error.message;
+          if (!content.includes(config.customConfig)) {
+            result.errors.push(`无效的配置文件内容: ${error.message}`);
           }
         } else {
-          result.error = error.message;
+          result.errors.push(`解析配置文件时出错: ${error.message}`);
         }
       }
       break;
     }
   }
 
+  if (!result.exists) {
+    result.errors.push('未找到 Prettier 配置文件');
+  }
+
+  result.isValid = result.errors.length === 0;
   return result;
 };
