@@ -103,13 +103,25 @@ class CountCheckPlugin {
     ts.forEachChild(sourceFile, node => this.visitNode(node, sourceFile, isTypeScriptFile, results));
   }
 
+  // 判断节点是否在类中
+  isNodeInClass(node) {
+    let parent = node.parent;
+    while (parent) {
+      if (ts.isClassDeclaration(parent)) {
+        return true;
+      }
+      parent = parent.parent;
+    }
+    return false;
+  }
+
   // 访问节点
   visitNode(node, sourceFile, isTypeScriptFile, results) {
     if (ts.isFunctionDeclaration(node) ||           
         ts.isFunctionExpression(node) ||            
         ts.isArrowFunction(node) ||                 
         ts.isMethodDeclaration(node)) {             
-      if (isTypeScriptFile && !ts.isArrowFunction(node)) { // 排除箭头函数
+      if (isTypeScriptFile && !ts.isArrowFunction(node) && !node.asteriskToken) { // 排除箭头函数，排除GeneratorFunction
         this.checkFunctionDeclaration(node, sourceFile, results);
       }
       if (node.asteriskToken) {
@@ -133,6 +145,11 @@ class CountCheckPlugin {
     const name = node.name ? node.name.getText() : 'anonymous';
     
     results.functionStats.total++;
+
+    // 如果函数在类中定义，跳过类型检查
+    if (this.isNodeInClass(node)) {
+      return;
+    }
 
     // 检查是否为 Hook 函数
     if (name.startsWith(this.config.function.hookPrefix)) {

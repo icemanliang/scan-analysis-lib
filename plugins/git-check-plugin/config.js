@@ -29,7 +29,7 @@ module.exports = {
   // Git 相关配置
   git: {
     // commit message 规范
-    commitMessagePattern: /^(Merge\s+branch\s+.*|(\[[a-zA-Z]+(?:-[a-zA-Z]+)*-\d+\]\s+(feat|fix|docs|style|refactor|test|chore)(\([a-z-]+\))?: .+))$/,
+    commitMessagePattern: /^((Merge|Revert)\s+.*|(\[[a-zA-Z]+(?:-[a-zA-Z]+)*-\d+\]\s+(feat|fix|docs|style|refactor|test|chore)(\([a-z-]+\))?: .+))$/,
     // 获取最近的 commit 数量
     recentCommitsCount: 10,
     // 必需的 husky hooks
