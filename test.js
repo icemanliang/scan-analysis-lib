@@ -82,6 +82,13 @@ const config = {
     {
       name: 'quality-analysis-plugin',
       config: {}
+    },
+    {
+      name: 'custom-plugin',
+      config: {
+        countFileType: 'js'
+      },
+      customPlugin: './custom-plugin.js'
     }
   ]
 };

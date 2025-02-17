@@ -18,6 +18,7 @@ interface Source {
 interface PluginConfig {
   name: string;
   config: Record<string, any>;
+  customPlugin?: string;
 }
 // 基础配置接口
 interface ScannerOptions {
