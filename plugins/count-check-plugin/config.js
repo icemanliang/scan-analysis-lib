@@ -14,9 +14,9 @@ module.exports = {
   // API 检测配置
   api: {
     // DOM API 检测对象
-    dom: ['document', 'window'],
+    dom: ['document'],
     // BOM API 检测对象
-    bom: ['window', 'navigator', 'screen', 'history']
+    bom: ['window', 'navigator', 'screen', 'history', 'location']
   },
 
   // 函数检测配置

@@ -373,6 +373,13 @@ const SCORE_DIMENSIONS = {
   updatePackages: {
     maxScore: scores.packages.update.maxScore,
     calculate: (qualityInfo) => !qualityInfo.packageInfo || qualityInfo.packageInfo?.updatePackagesCount > 0 ? 0 : scores.packages.update.maxScore
+  },
+
+  // 黑名单导入评分
+  // 计算逻辑：存在黑名单导入得 0 分，否则得满分
+  blackImport: {
+    maxScore: scores.blackImport.maxScore,
+    calculate: (qualityInfo) => !qualityInfo.dependencyInfo || qualityInfo.dependencyInfo.blackImports.length > 0 ? 0 : scores.blackImport.maxScore
   }
 };
 

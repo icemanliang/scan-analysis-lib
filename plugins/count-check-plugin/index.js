@@ -281,18 +281,9 @@ class CountCheckPlugin {
       });
       return;
     }
-    // 动态参数调用
-    const firstArg = args[0];
-    if (!ts.isStringLiteral(firstArg)) {
-      // this.devLog('checkTFunction', 'first argument is not a string literal');
-      results.tFunctionCheck.runParamCalls.push({
-        file: sourceFile.fileName,
-        line: sourceFile.getLineAndCharacterOfPosition(node.getStart()).line + 1,
-        reason: '动态参数调用'
-      });
-      return;
-    }
 
+    const firstArg = args[0];
+    // console.log('firstArg', firstArg);
     const text = firstArg.text;
     const location = {
       file: sourceFile.fileName,
@@ -300,7 +291,7 @@ class CountCheckPlugin {
     };
 
     // 检查字符串长度
-    if (text.length > 50) {
+    if (text && text.length > 50) {
       results.tFunctionCheck.issues.push({
         ...location,
         reason: '字符串长度不能超过50'
@@ -308,24 +299,15 @@ class CountCheckPlugin {
       return;
     }
 
-    // 单参数时必须是纯中文
-    if (args.length === 1) {
-      if (!/^[\u4e00-\u9fa5]+$/.test(text)) {
+    // 多参数时检查占位符数量
+    if(text && args.length > 1) {
+      const placeholders = text.match(/\{(\d+)?\}/g) || [];
+      if (placeholders.length !== args.length - 1) {
         results.tFunctionCheck.issues.push({
           ...location,
-          reason: '单参数调用只能包含中文'
+          reason: `占位符数量与参数数量不匹配`
         });
       }
-      return;
-    }
-
-    // 多参数时检查占位符数量
-    const placeholders = text.match(/\{(\d+)?\}/g) || [];
-    if (placeholders.length !== args.length - 1) {
-      results.tFunctionCheck.issues.push({
-        ...location,
-        reason: `占位符数量与参数数量不匹配`
-      });
     }
   }
 }

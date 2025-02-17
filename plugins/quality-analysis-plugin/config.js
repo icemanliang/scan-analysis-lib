@@ -6,7 +6,7 @@ module.exports = {
   scoreDimensions: {
     eslint: {
       avgIssues: {
-        maxScore: 18, // ESLint 错误评分的最高分
+        maxScore: 16, // ESLint 错误评分的最高分
         errorWeight: 0.65, // error 级别问题的权重
         warningWeight: 0.35, // warning 级别问题的权重
         maxErrorsPerFile: 3, // 单文件允许的最大 error 数，超过后得0分
@@ -133,6 +133,9 @@ module.exports = {
       update: {
         maxScore: 2 // 可更新依赖包评分的最高分
       }
+    },
+    blackImport: {
+      maxScore: 2, // 黑名单导入评分的最高分
     }
   }
 };

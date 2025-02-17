@@ -1,6 +1,8 @@
 /**
  * 转换依赖导入数据结构
  * @param {Object} detailedImports - 原始的详细导入信息
+ * @param {Object} blackImport - 黑名单配置
+ * @param {string} packageName - 当前处理的包名
  * @returns {Object} 转换后的导入信息，以导出项为key
  * 
  * 示例输入:
@@ -21,8 +23,12 @@
  *   }
  * }
  */
-exports.transformDetailedImports = (detailedImports) => {
+exports.transformDetailedImports = (detailedImports, blackImport = [], packageName = '') => {
   const result = {};
+
+  // 查找当前包的黑名单配置
+  const blackConfig = blackImport.find(item => item.name === packageName);
+  const blackList = blackConfig ? blackConfig.items : [];
 
   // 遍历所有文件
   Object.entries(detailedImports).forEach(([filePath, imports]) => {
@@ -37,6 +43,11 @@ exports.transformDetailedImports = (detailedImports) => {
           count: 0,
           files: []
         };
+        
+        // 如果在黑名单中，添加 isBlack 标记
+        if (blackList.includes(importName)) {
+          result[importName].isBlack = true;
+        }
       }
       
       // 更新计数和文件列表

@@ -146,8 +146,25 @@ exports.extractQualityInfo = (results) => {
 
   // 提取 dependencyInfo
   if (results.dependencyInfo) {
+    const blackImports = [];
+    
+    // 遍历外部依赖
+    Object.entries(results.dependencyInfo.external).forEach(([packageName, packageInfo]) => {
+      // 遍历每个包的详细导入信息
+      Object.entries(packageInfo.detailedImports).forEach(([importName, importInfo]) => {
+        if (importInfo.isBlack) {
+          blackImports.push({
+            package: packageName,
+            import: importName,
+            count: importInfo.count,
+          });
+        }
+      });
+    });
+
     qualityInfo.dependencyInfo = {
-      dependencyZeroFilesCount: results.dependencyInfo.dependencyZeroFiles.length
+      dependencyZeroFilesCount: results.dependencyInfo.dependencyZeroFiles.length,
+      blackImports  // 添加标记依赖项统计
     };
   }
 

@@ -73,7 +73,12 @@ const config = {
     },
     {
       name: 'dependency-check-plugin',
-      config: {}
+      config: {
+        blackImport: [{
+          name: 'lodash',
+          items: ['cloneDeep']
+        }]
+      }
     },
     {
       name: 'build-check-plugin',

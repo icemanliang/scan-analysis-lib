@@ -15,6 +15,7 @@ class DependencyCheckPlugin {
         ...defaultConfig.compilerOptions,
         ...config.compilerOptions
       },
+      blackImport: config.blackImport || defaultConfig.blackImport,
       ignoreMatch: config.ignoreMatch || defaultConfig.ignoreMatch,
       ignoreBailFile: config.ignoreBailFile || defaultConfig.ignoreBailFile
     };
@@ -143,7 +144,11 @@ class DependencyCheckPlugin {
     // 在输出结果之前转换数据结构
     Object.keys(externalDependencies).forEach(packageName => {
       externalDependencies[packageName].detailedImports = 
-        transformDetailedImports(externalDependencies[packageName].detailedImports);
+        transformDetailedImports(
+          externalDependencies[packageName].detailedImports,
+          this.config.blackImport,
+          packageName
+        );
     });
 
     // 计算依赖度为0的文件
