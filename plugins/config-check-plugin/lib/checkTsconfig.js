@@ -12,7 +12,13 @@ module.exports = async function checkTsconfig(context, config) {
       const tsConfig = await loadConfig(filePath);
 
       if (!tsConfig.compilerOptions) {
-        result.errors.push('缺少 compilerOptions 配置');
+        if(!tsConfig.extends){
+          result.errors.push('缺少 compilerOptions 配置');
+        }else{
+          if(typeof(tsConfig.extends) ==='string' && tsConfig.extends !==config.customConfig){
+            result.errors.push('extends 配置不正确');
+          }
+        }
       } else {
         Object.entries(config.compilerOptions).forEach(([option, expectedValue]) => {
           const actualValue = tsConfig.compilerOptions[option];
@@ -28,7 +34,7 @@ module.exports = async function checkTsconfig(context, config) {
             if (actualValue !== expectedValue) {
               result.errors.push(`compilerOptions.${option} 必须设置为 ${expectedValue}`);
             }
-          } else if (actualValue !== expectedValue) {
+          } else if (actualValue !== expectedValue && option !=='jsx') {
             result.errors.push(`compilerOptions.${option} 必须设置为 ${expectedValue}`);
           }
         });

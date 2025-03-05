@@ -191,7 +191,8 @@ module.exports = {
       noImplicitAny: true,
       skipLibCheck: true,
       lib: ['esnext', 'dom', 'WebWorker']
-    }
+    },
+    customConfig: './src/.iceman/config/base-tsconfig.json',
   },
 
   // license 相关配置
