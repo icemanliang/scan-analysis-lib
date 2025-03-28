@@ -308,17 +308,6 @@ class CountCheckPlugin {
       return;
     }
 
-    // 单参数时必须是纯中文
-    if (args.length === 1) {
-      if (!/^[\u4e00-\u9fa5]+$/.test(text)) {
-        results.tFunctionCheck.issues.push({
-          ...location,
-          reason: '单参数调用只能包含中文'
-        });
-      }
-      return;
-    }
-
     // 多参数时检查占位符数量
     const placeholders = text.match(/\{(\d+)?\}/g) || [];
     if (placeholders.length !== args.length - 1) {
