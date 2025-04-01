@@ -57,31 +57,39 @@ scan(scanConfig);
 
 `after`: 扫描结束后
 
-生命周期串行顺序：pre ---> code ---> project ---> dependency ---> quality ---> after
+生命周期串行顺序：`pre` ---> `code` ---> `project` ---> `dependency` ---> `quality` ---> `after`
 
 ## 内置插件
 
 ### code阶段
-es规范检查插件:  eslint-check-plugin 
-css规范检查插件: stylelint-check-plugin 
-调用统计检查插件: count-check-plugin 
+es规范检查插件:  eslint-check-plugin
+
+css规范检查插件: stylelint-check-plugin
+
+调用统计检查插件: count-check-plugin
+
 代码冗余检查插件：redundancy-check-plugin 
 
 ### project阶段
-工程配置检查插件: config-check-plugin 
-代码仓库检查插件: git-check-plugin 
+工程配置检查插件: config-check-plugin
+
+代码仓库检查插件: git-check-plugin
+
 构建产物检查插件: build-check-plugin 
 
 ### dependency阶段
-NPM依赖检查插件:  package-check-plugin 
+NPM依赖检查插件:  package-check-plugin
+
 依赖调用检查插件:  dependency-check-plugin 
 
 ### quality阶段
 应用质量分析插件:  quality-analysis-plugin 
 
 ## 企业级场景
-(1) CI CLI Tool (CI卡点命令行工具)  
+(1) CI CLI Tool (CI卡点命令行工具)
+
 (2) Node Analyze Server (代码分析服务)
+
 (3) Vscode Extension (代码扫描插件)
 
 ## 自定义插件
