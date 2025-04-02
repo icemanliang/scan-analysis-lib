@@ -15,7 +15,7 @@ const scan = require('scan-analysis-lib');
 
 const scanConfig = {
   resultDir: 'scan-results',
-  source: [
+  sources: [
     {
       appName: 'demo',
       baseDir: 'resources/demo',
