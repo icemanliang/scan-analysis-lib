@@ -59,30 +59,34 @@ class EslintCheckPlugin {
       overrideConfigFile: null,
       baseConfig: {
         ignorePatterns,
-        parser: hasVue ? 'vue-eslint-parser' : (useTypeScript ? '@typescript-eslint/parser' : '@babel/eslint-parser'),
+        parser: '@babel/eslint-parser',
         parserOptions: {
           ...this.config.parserOptions,
-          parser: useTypeScript ? '@typescript-eslint/parser' : '@babel/eslint-parser',
-          // ...(useTypeScript ? { project: path.join(context.baseDir, 'tsconfig.json') } : {}),
+          parser: '@babel/eslint-parser',
           extraFileExtensions: hasVue ? ['.vue'] : []
         },
         settings: !hasVue ? this.config.settings : {},
         env: this.config.env,
         plugins: [
           ...this.config.basePlugins,
-          ...(useTypeScript ? ['@typescript-eslint'] : []),
           ...(hasVue ? ['vue'] : [])
         ],
         extends: [
           ...this.config.baseExtends,
-          ...(useTypeScript ? ['plugin:@typescript-eslint/recommended'] : [])
         ],
         noInlineConfig: true, // 禁用内联配置
         rules: {
           ...this.config.baseRules,
-          ...(useTypeScript ? this.config.tsRules : { 'camelcase': ['error', { properties: 'never' }] }),
           ...(hasVue ? this.config.vueRules : {}),
-        }
+        },
+        overrides: [
+          {
+            files: ['**/*.{ts,tsx}'],
+            parser: '@typescript-eslint/parser',
+            plugins: ['@typescript-eslint'],
+            rules: this.config.tsRules,
+          },      
+        ]
       }
     };
   }
