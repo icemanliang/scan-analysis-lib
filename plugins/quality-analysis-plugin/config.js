@@ -7,10 +7,10 @@ module.exports = {
     eslint: {
       avgIssues: {
         maxScore: 18, // ESLint 错误评分的最高分
-        errorWeight: 0.65, // error 级别问题的权重
-        warningWeight: 0.35, // warning 级别问题的权重
-        maxErrorsPerFile: 3, // 单文件允许的最大 error 数，超过后得0分
-        maxWarningsPerFile: 3 // 单文件允许的最大 warning 数，超过后得0分
+        errorWeight: 0.6, // error 级别问题的权重
+        warningWeight: 0.4, // warning 级别问题的权重
+        maxErrorsPerFile: 2, // 单文件允许的最大 error 数，超过后得0分
+        maxWarningsPerFile: 2 // 单文件允许的最大 warning 数，超过后得0分
       },
       fileRatio: {
         maxScore: 4 // ESLint 检查文件覆盖率评分的最高分
