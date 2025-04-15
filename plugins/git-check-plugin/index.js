@@ -83,7 +83,7 @@ class GitCheckPlugin {
     const depthResults = await this.analyzeDirectoryDepth(
       baseDir,
       codeDir,
-      this.config.directory?.maxAllowedDepth || 5  // 默认阈值为5
+      this.config.directory?.maxAllowedDepth || 10  // 默认阈值为5
     );
     results.directoryDepth = depthResults;
 

@@ -45,6 +45,6 @@ module.exports = {
   },
 
   directory: {
-    maxAllowedDepth: 5  // 建议最大目录深度
+    maxAllowedDepth: 10  // 建议最大目录深度
   }
 }; 

@@ -44,7 +44,7 @@ module.exports = {
     directory: {
       depth: {
         maxScore: 2, // 目录深度评分的最高分
-        maxDepth: 5 // 允许的最大目录深度，超过后得0分
+        maxDepth: 10 // 允许的最大目录深度，超过后得0分
       },
       deep: {
         maxScore: 2, // 深层目录数量评分的最高分
