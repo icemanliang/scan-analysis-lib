@@ -2,6 +2,16 @@
 
 a tool to scan and analyze the code of the projects
 
+![技术方案](/image.png)
+
+扫描引擎属于整套代码分析解决方案的核心模块
+
+![技术方案](/image2.png)
+
+#### More
+
+想要了解如何基于AST，编译器等工具对代码进行扫描分析，可以学习：<a href="https://s.juejin.cn/ds/iMsB4RxQ/" target="_blank">《前端依赖治理：代码分析工具开发实战》</a>
+
 ## 安装
 
 ```bash
