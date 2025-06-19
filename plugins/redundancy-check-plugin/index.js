@@ -1,4 +1,5 @@
-const { Detector, MemoryStore, mild } = require('@jscpd/core');
+const { Detector, mild } = require('@jscpd/core');
+const LevelDbStore = require('./leveldb-store');
 const { Tokenizer } = require('@jscpd/tokenizer');
 const path = require('path');
 const glob = require('fast-glob');
@@ -25,8 +26,9 @@ class RedundancyCheckPlugin {
   }
   
   // 重复代码检测
-  async detectRedundancy(context, config) {
+  async detectRedundancy(context, config, tempDir) {
     const srcPath = path.resolve(context.baseDir, context.codeDir);
+    const levelDbPath = path.join(context.resultDir, tempDir);
 
     const files = glob.sync(config.files.patterns, {
       cwd: srcPath,
@@ -45,7 +47,7 @@ class RedundancyCheckPlugin {
 
     // 创建必要的实例
     const tokenizer = new Tokenizer();
-    const store = new MemoryStore();
+    const store = new LevelDbStore({ path: levelDbPath });
     const detector = new Detector(
       tokenizer,
       store,
@@ -82,6 +84,8 @@ class RedundancyCheckPlugin {
       }
     }
 
+    await store.close();
+
     return {
       filesCount: files.length,
       clones: clones
@@ -95,8 +99,8 @@ class RedundancyCheckPlugin {
       try {
         context.logger.log('info', 'start redundancy check...');
         const startTime = Date.now();
-        const { filesCount: jsFilesCount, clones: jsClones } = await this.detectRedundancy(context, this.config.jsCheck);
-        const { filesCount: jsxFilesCount, clones: jsxClones } = await this.detectRedundancy(context, this.config.jsxCheck);
+        const { filesCount: jsFilesCount, clones: jsClones } = await this.detectRedundancy(context, this.config.jsCheck, 'temp-js');
+        const { filesCount: jsxFilesCount, clones: jsxClones } = await this.detectRedundancy(context, this.config.jsxCheck, 'temp-jsx');
         const filesCount = jsFilesCount + jsxFilesCount;
         const clones = [...jsClones, ...jsxClones];
         // this.devLog('clones', clones);

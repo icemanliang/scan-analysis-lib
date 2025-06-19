@@ -1,6 +1,6 @@
 {
   "name": "scan-analysis-lib",
-  "version": "1.7.2",
+  "version": "1.8.0",
   "description": "a tool to scan and analyze the code of the projects",
   "main": "index.js",
   "module": "index.js",
@@ -49,6 +49,7 @@
     "htmlparser2": "^9.1.0",
     "js-yaml": "^4.1.0",
     "jsonc-parser": "^3.3.1",
+    "level": "^10.0.0",
     "moment": "^2.30.1",
     "postcss": "^8.4.47",
     "postcss-less": "^6.0.0",
